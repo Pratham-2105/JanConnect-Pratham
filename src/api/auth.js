@@ -7,7 +7,9 @@ export const registerUser = (formData) => {
     },
   });
 };
+export const loginUser = (data) => api.post('/user/login', data, {
+  headers: { "Content-Type": "application/json" },
+});
 
-export const loginUser = (data) => api.post('/user/login', data);
 export const getCurrentUser = () => api.get('/user/current-user');
 export const logoutUser = () => api.post('/user/logout');
