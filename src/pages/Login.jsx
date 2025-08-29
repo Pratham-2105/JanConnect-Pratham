@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function Login() {
+
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -10,19 +11,39 @@ export default function Login() {
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const onSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSubmitting(true);
-    try {
-      // TODO: call POST /user/login
-      console.log("user login payload:", form);
-      navigate("/");
-    } catch {
-      setError("Login failed. Try again.");
-    } finally {
-      setSubmitting(false);
+  e.preventDefault();
+  setError("");
+  setSubmitting(true);
+
+  try {
+    const res = await fetch("http://localhost:8000/api/v1/user/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(form),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Login failed");
     }
-  };
+
+    // Save user details in localStorage
+    localStorage.setItem("user", JSON.stringify(data.data.user)); 
+localStorage.setItem("accessToken", data.data.accessToken);   
+
+
+    // Navigate to dashboard
+    navigate("/dashboard");
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   return (
     <div className="max-w-xl mx-auto px-4 py-10">
