@@ -197,7 +197,7 @@ export default function ImpactHeroSlider({
             <Particles variant="light" />
 
             <div className="relative z-10 flex flex-col items-start justify-start h-full w-full px-6 pt-10">
-              <Headline text="But you can" variant="clean" />
+              <Headline text="But you can !" variant="clean" />
               <motion.p
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}

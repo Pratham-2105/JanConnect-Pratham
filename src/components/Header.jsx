@@ -9,25 +9,45 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  // Check system preference on initial load
+  // Check system preference and saved preference on initial load
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setIsDarkMode(prefersDark);
-      
-      // Update document class for Tailwind dark mode
-      if (prefersDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
+    // Check if user has a saved preference
+    const savedTheme = localStorage.getItem("theme");
+    
+    // Check system preference
+    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    // Determine initial theme
+    let initialDarkMode = false;
+    
+    if (savedTheme) {
+      initialDarkMode = savedTheme === "dark";
+    } else {
+      initialDarkMode = systemPrefersDark;
+    }
+    
+    setIsDarkMode(initialDarkMode);
+    
+    // Apply the theme to the document
+    if (initialDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
     }
   }, []);
 
   // Toggle dark/light mode
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
   };
 
   // Detect scroll for header style changes
@@ -35,8 +55,8 @@ const Header = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Close mobile menu when route changes
@@ -49,8 +69,8 @@ const Header = () => {
       <motion.header 
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           isScrolled 
-            ? 'bg-white/20 dark:bg-black/20 backdrop-blur-lg shadow-sm' 
-            : 'bg-white/10 dark:bg-black/10 backdrop-blur-md'
+            ? "bg-white/20 dark:bg-black/20 backdrop-blur-lg shadow-sm" 
+            : "bg-white/10 dark:bg-black/10 backdrop-blur-md"
         }`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
