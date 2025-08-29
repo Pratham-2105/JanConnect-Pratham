@@ -83,164 +83,65 @@ function BottomCard({ thumbs }) {
   const offsets = ["-translate-y-30", "-translate-y-15", "translate-y-3"];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="w-[min(90%,800px)] h-[40%] absolute bottom-0 right-0 z-50"
-    >
-      <div className="h-full flex flex-col justify-end pb-4">
-        <div className="flex h-full gap-6 md:gap-8 px-2 justify-end items-end">
-          {thumbs.slice(0, 3).map((src, idx) => (
-            <motion.div
-              key={idx}
-              className={`relative h-full w-[250px] overflow-hidden rounded-2xl ${offsets[idx]} cursor-pointer group`}
-              whileHover={{
-                scale: 1.1,
-                z: 50,
-                transition: { duration: 0.3, ease: "easeOut" },
-              }}
-            >
-              {/* Card Image */}
-              <img
-                src={src}
-                alt="preview"
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                loading="lazy"
-              />
-
-              {/* Overlay on hover */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300" />
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function Headline({ text }) {
-  return (
-    <motion.h1
-      initial={{ opacity: 0, y: -40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
-      className="pointer-events-none select-none text-left w-full text-6xl md:text-8xl lg:text-9xl font-extrabold tracking-tight drop-shadow-xl px-6 mt-10 leading-[1.1] text-white"
-      data-swiper-parallax="-100%"
-    >
-      {text}
-    </motion.h1>
-  );
-}
-
-export default function ImpactHeroSlider({
-  dirtyBg = defaultDirtyBg,
-  dirtyThumbs = defaultDirtyThumbs,
-  cleanBg = defaultCleanBg,
-  cleanThumbs = defaultCleanThumbs,
-  onCTA,
-}) {
-  return (
-    <div className="relative h-[100svh] w-full mx-auto my-4 max-w-[95vw] rounded-3xl overflow-hidden shadow-2xl">
-      <style>{paginationStyles}</style>
-      
-      {/* Dark Glowy Border for the whole component */}
-      <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-900/10 via-transparent to-blue-900/10 blur-xl scale-105 -z-10" />
-      <div className="absolute inset-0 rounded-3xl border border-transparent bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 shadow-[0_0_60px_15px_rgba(76,29,149,0.3)]" />
-      
-      <Swiper
-        modules={[Pagination, EffectFade, Autoplay, Parallax]}
-        pagination={{ clickable: true, el: ".swiper-pagination" }}
-        effect="fade"
-        speed={900}
-        parallax
-        autoplay={{ delay: 2000, disableOnInteraction: false }}
-        className="h-full w-full"
-      >
-        {/* Slide 1 — Unclean City */}
-        <SwiperSlide>
-          <section className="relative h-[100svh] w-full overflow-hidden">
-            {/* Dark Blur/Glow Effect for first slide */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-blue-900/20 backdrop-blur-sm z-10" />
-            <div className="absolute inset-0 bg-radial-gradient(at center center, rgba(76,29,149,0.4) 0%, transparent 70%) z-10" />
-            <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(0,0,0,0.7)] z-10" />
-            
-            <img
-              src={dirtyBg}
-              alt="Unclean City"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/40 to-black/70" />
-            <Particles variant="dust" />
-
-            {/* Headline shifted to top-left */}
-            <div className="relative z-20 flex flex-col items-start justify-start h-full w-full px-6 pt-10">
-              <Headline text="Nature can't speak-" />
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                className="mt-4 max-w-xl text-left text-white/80 md:text-lg"
-                data-swiper-parallax="-60%"
-              >
-                But the city's pain is loud—pollution, waste, neglect. See it.
-                Feel it.
-              </motion.p>
+    <div dangerouslySetInnerHTML={{ __html: `
+      <!-- Header -->
+      <header id="header"><div class="logo">Jan Connect</div>
+        <a href="#menu"><span>Menu</span></a>
+      </header><!-- Nav --><nav id="mode"></nav>
+      <section id="banner" class="bg-img" data-bg="image1.png"><div class="inner">
+          <header><h1>Welcome to JanConnect!</h1>
+          </header></div>
+        <a href="#one" class="more">Learn More</a>
+      </section><!-- One --><section id="one" class="wrapper post bg-img" data-bg="image2.png"><div class="inner">
+          <article class="box"><header><h2>Nibh non lobortis mus nibh</h2>
+              <p>01.01.2017</p>
+            </header><div class="content">
+              <p>Scelerisque enim mi curae erat ultricies lobortis donec velit in per cum consectetur purus a enim platea vestibulum lacinia et elit ante scelerisque vestibulum. At urna condimentum sed vulputate a duis in senectus ullamcorper lacus cubilia consectetur odio proin sociosqu a parturient nam ac blandit praesent aptent. Eros dignissim mus mauris a natoque ad suspendisse nulla a urna in tincidunt tristique enim arcu litora scelerisque eros suspendisse.</p>
             </div>
-
-            {/* Bottom card moved to right side */}
-            <BottomCard thumbs={dirtyThumbs} />
-          </section>
-        </SwiperSlide>
-
-        {/* Slide 2 — Clean City */}
-        <SwiperSlide>
-          <section className="relative h-[100svh] w-full overflow-hidden">
-            {/* Light Blur/Glow Effect for second slide */}
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-emerald-400/10 backdrop-blur-sm z-10" />
-            <div className="absolute inset-0 bg-radial-gradient(at center center, rgba(6,182,212,0.3) 0%, transparent 70%) z-10" />
-            <div className="absolute inset-0 shadow-[inset_0_0_100px_rgba(255,255,255,0.2)] z-10" />
-            
-            <img
-              src={cleanBg}
-              alt="Clean City"
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50" />
-            <Particles variant="light" />
-
-            <div className="relative z-20 flex flex-col items-start justify-start h-full w-full px-6 pt-10">
-              <Headline text="But you can" />
-              <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-                className="mt-4 max-w-xl text-left text-white/90 md:text-lg"
-                data-swiper-parallax="-60%"
-              >
-                Report. Act. Transform. Your voice turns problems into progress.
-              </motion.p>
-
-              {onCTA && (
-                <motion.button
-                  onClick={onCTA}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="mt-6 rounded-xl px-5 py-3 text-sm font-semibold text-black/90 bg-white/90 backdrop-blur-lg border border-white/40 shadow-lg hover:shadow-2xl hover:bg-white transition-all duration-300"
-                >
-                  Start Reporting →
-                </motion.button>
-              )}
+            <footer><a href="" class="button alt">Learn More</a>
+            </footer></article></div>
+        <a href="#two" class="more">Learn More</a>
+      </section><!-- Two --><section id="two" class="wrapper post bg-img" data-bg="image5.png"><div class="inner">
+          <article class="box"><header><h2>Mus elit a ultricies at</h2>
+              <p>12.21.2016</p>
+            </header><div class="content">
+              <p>Scelerisque enim mi curae erat ultricies lobortis donec velit in per cum consectetur purus a enim platea vestibulum lacinia et elit ante scelerisque vestibulum. At urna condimentum sed vulputate a duis in senectus ullamcorper lacus cubilia consectetur odio proin sociosqu a parturient nam ac blandit praesent aptent. Eros dignissim mus mauris a natoque ad suspendisse nulla a urna in tincidunt tristique enim arcu litora scelerisque eros suspendisse.</p>
             </div>
+            <footer><a href="" class="button alt">Learn More</a>
+            </footer></article></div>
+        <a href="#three" class="more">Learn More</a>
+      </section><!-- Three --><section id="three" class="wrapper post bg-img" data-bg="image4.png"><div class="inner">
+          <article class="box"><header><h2>Varius a cursus aliquet</h2>
+              <p>11.11.2016</p>
+            </header><div class="content">
+              <p>Scelerisque enim mi curae erat ultricies lobortis donec velit in per cum consectetur purus a enim platea vestibulum lacinia et elit ante scelerisque vestibulum. At urna condimentum sed vulputate a duis in senectus ullamcorper lacus cubilia consectetur odio proin sociosqu a parturient nam ac blandit praesent aptent. Eros dignissim mus mauris a natoque ad suspendisse nulla a urna in tincidunt tristique enim arcu litora scelerisque eros suspendisse.</p>
+            </div>
+            <footer><a href="" class="button alt">Learn More</a>
+            </footer></article></div>
+        <a href="#four" class="more">Learn More</a>
+      </section><!-- Four --><section id="four" class="wrapper post bg-img" data-bg="image3.png"><div class="inner">
+          <article class="box"><header><h2>Luctus blandit mi lectus in nascetur</h2>
+              <p>10.30.2016</p>
+            </header><div class="content">
+              <p>Scelerisque enim mi curae erat ultricies lobortis donec velit in per cum consectetur purus a enim platea vestibulum lacinia et elit ante scelerisque vestibulum. At urna condimentum sed vulputate a duis in senectus ullamcorper lacus cubilia consectetur odio proin sociosqu a parturient nam ac blandit praesent aptent. Eros dignissim mus mauris a natoque ad suspendisse nulla a urna in tincidunt tristique enim arcu litora scelerisque eros suspendisse.</p>
+            </div>
+            <footer><a href="" class="button alt">Learn More</a>
+            </footer></article></div>
+      </section><!-- Footer --><footer id="footer"><div class="inner">
 
-            <BottomCard thumbs={cleanThumbs} />
-          </section>
-        </SwiperSlide>
-      </Swiper>
+      <button style="background-color: black; color: white;text-align:centre; padding: 10px 20px; border: 1px solid white; cursor: pointer; font-size: 16px;margin-left: 340px">Login</button>
 
-      <div className="swiper-pagination !bottom-8" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/30 to-transparent" />
+    <button style="background-color: white; color: black; text-align:centre;padding: 10px 20px; border: 1px solid black; cursor: pointer; font-size: 16px; margin-left: 20px;">Sign Up</button>
+
+
+          <ul class="icons"><li><a href="#" class="icon round fa-twitter"><span class="label">Twitter</span></a></li>
+            <li><a href="#" class="icon round fa-facebook"><span class="label">Facebook</span></a></li>
+            <li><a href="#" class="icon round fa-instagram"><span class="label">Instagram</span></a></li>
+          </ul></div>
+      </footer><div class="copyright">
+     <p>All copyrights reserved 2025.</p>
     </div>
   );
-}
+};
+
+export default Home;
