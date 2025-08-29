@@ -31,7 +31,7 @@ const paginationStyles = `
 `;
 
 const defaultDirtyBg = "/images/dirtybg.jpg";
-const defaultCleanBg = "/images/cleanbg.jpg";
+const defaultCleanBg = "/images/dirtybg2.jpg";
 
 const defaultDirtyThumbs = [
   "/images/dirty6.jpg",
