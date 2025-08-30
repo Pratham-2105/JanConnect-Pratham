@@ -72,7 +72,7 @@ export default function Signup() {
             <h1 className="text-4xl lg:text-5xl font-light mb-3 transition-all duration-1000 delay-100 ease-out ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }">Join</h1>
-            <h2 className="text-5xl lg:text-6xl font-bold text-white bg-clip-text text-transparent transition-all duration-1000 delay-200 ease-out ${
+            <h2 className="text-5xl lg:text-6xl font-bold text-white bg-clip-text transition-all duration-1000 delay-200 ease-out ${
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }">
               JanConnect
