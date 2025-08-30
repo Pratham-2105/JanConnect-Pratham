@@ -25,11 +25,15 @@ export default function Login() {
                 const response = await getCurrentUser()
                 const userData = response.data.data
                 if(userData){
-                    dispatch(authLogin({userData}))
-                    navigate('/dashboard')          
+                    dispatch(authLogin({userData}))         
                 }
             }
 
+  // Save user details in localStorage
+    localStorage.setItem("user", JSON.stringify(session.data.data.user)); 
+    localStorage.setItem("accessToken", session.data.data.accessToken);   
+    // Navigate to dashboard
+    navigate("/dashboard");
   } catch (err) {
     setError(err.response.data.message);
   } finally {
