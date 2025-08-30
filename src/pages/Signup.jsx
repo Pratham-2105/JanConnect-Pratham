@@ -1,262 +1,242 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, CheckCircle, Star, Calendar, MapPin } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { registerUser } from "../api/auth";
 
-export default function ResolvedComplaints() {
+export default function Signup() {
   const navigate = useNavigate();
-  const { userId } = useParams();
-  const [resolvedComplaints, setResolvedComplaints] = useState([]);
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [form, setForm] = useState({
+    name: "",
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    avatar: null,
+  });
 
-  // Sample data
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
-    const sampleComplaints = [
-      {
-        id: "COMP-002",
-        title: "Garbage not collected",
-        category: "Sanitation",
-        date: "2023-10-10",
-        resolvedDate: "2023-10-13",
-        description: "Garbage hasn't been collected for 5 days",
-        location: "123 Main Street",
-        updates: [
-          { date: "2023-10-11", message: "Complaint received" },
-          { date: "2023-10-12", message: "Collection scheduled" },
-          { date: "2023-10-13", message: "Issue resolved - garbage collected" }
-        ],
-        rating: 4,
-        feedback: "Quick response time, satisfied with the resolution"
-      },
-      {
-        id: "COMP-004",
-        title: "Water logging during rain",
-        category: "Infrastructure",
-        date: "2023-09-25",
-        resolvedDate: "2023-10-05",
-        description: "Road gets flooded even with light rain",
-        location: "Oak Avenue & 5th Street",
-        updates: [
-          { date: "2023-09-26", message: "Complaint received" },
-          { date: "2023-09-28", message: "Inspected drainage system" },
-          { date: "2023-10-02", message: "Drainage cleaning initiated" },
-          { date: "2023-10-05", message: "Issue resolved - drainage system improved" }
-        ],
-        rating: 5,
-        feedback: "Excellent work! The problem is completely solved."
-      },
-      {
-        id: "COMP-005",
-        title: "Illegal parking issue",
-        category: "Public Safety",
-        date: "2023-09-15",
-        resolvedDate: "2023-09-20",
-        description: "Vehicles parked illegally blocking emergency access",
-        location: "Maple Road",
-        updates: [
-          { date: "2023-09-16", message: "Complaint received" },
-          { date: "2023-09-18", message: "Traffic police notified" },
-          { date: "2023-09-20", message: "Issue resolved - warning signs installed" }
-        ],
-        rating: 3,
-        feedback: "Issue was resolved but took longer than expected"
-      }
-    ];
+    // Trigger the animation after a tiny delay
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 50);
     
-    setResolvedComplaints(sampleComplaints);
+    return () => clearTimeout(timer);
   }, []);
 
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`h-4 w-4 ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-white/30"}`}
-      />
-    ));
+  const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      const res = await registerUser(formData);
+      alert(res.message || "Signup successful!");
+      navigate("/login");
+    } catch (err) {
+      setError(err?.response?.data?.message || "Signup failed. Try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background matching the login page exactly */}
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Background image with glassmorphism overlay */}
       <div className="absolute inset-0 z-0">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
+          style={{ backgroundImage: "url('/images/dirtybglog.jpg')" }}
         ></div>
-        {/* Exact same glassmorphism overlay as login page */}
+        {/* Enhanced glassmorphism overlay */}
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       </div>
 
-      {/* Header */}
-      <motion.header 
-        className="fixed top-0 left-0 w-full z-50 bg-white/10 backdrop-blur-md"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 20, stiffness: 300 }}
-      >
-        <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
-          <motion.button 
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-800 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/20"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back
-          </motion.button>
-          
-          <motion.div 
-            className="text-xl md:text-2xl font-bold text-gray-800"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            Resolved Complaints
-          </motion.div>
-          
-          <div className="w-10"></div> {/* Spacer for balance */}
-        </div>
-      </motion.header>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center p-4 relative z-10 mt-16">
-        <motion.div 
-          className="w-full max-w-4xl bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-6 md:p-8 border border-white/20"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex items-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center mr-4">
-              <CheckCircle className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Resolved Issues</h1>
+      {/* Main content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 flex flex-col lg:flex-row items-center justify-between">
+        
+        {/* Left side - Signup form */}
+        <div className={`w-full lg:w-2/5 text-white mb-16 lg:mb-0 transition-all duration-700 ease-out ${
+          isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}>
+          <div className="mb-10">
+            <h1 className="text-4xl lg:text-5xl font-light mb-3 transition-all duration-1000 delay-100 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">Join</h1>
+            <h2 className="text-5xl lg:text-6xl font-bold text-white bg-clip-text transition-all duration-1000 delay-200 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              JanConnect
+            </h2>
           </div>
 
-          {resolvedComplaints.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {resolvedComplaints.map((complaint, index) => (
-                <motion.div 
-                  key={complaint.id}
-                  className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                  onClick={() => setSelectedComplaint(complaint)}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-white">{complaint.title}</h3>
-                    <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs font-medium">
-                      Resolved
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center text-white/60 text-sm mb-2">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    <span>Resolved on {complaint.resolvedDate}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-white/60 text-sm mb-3">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    <span>{complaint.location}</span>
-                  </div>
-                  
-                  <p className="text-white/80 text-sm mb-3 line-clamp-2">{complaint.description}</p>
-                  
-                  <div className="flex items-center">
-                    <div className="flex mr-2">
-                      {renderStars(complaint.rating)}
-                    </div>
-                    <span className="text-white/60 text-sm">{complaint.rating}/5</span>
-                  </div>
-                </motion.div>
-              ))}
+          <form onSubmit={onSubmit} className="space-y-6">
+            {/* Form fields with staggered animations */}
+            <div className="transition-all duration-700 delay-300 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              <label className="block text-sm font-medium mb-2 opacity-90">Full Name</label>
+              <input
+                placeholder="Enter your full name"
+                value={form.name}
+                onChange={(e) => update("name", e.target.value)}
+                required
+                className="w-full px-4 py-3.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 outline-none placeholder:text-white/60 shadow-lg"
+              />
             </div>
-          ) : (
-            <div className="text-center py-8 text-white/60">
-              <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No resolved complaints yet.</p>
-            </div>
-          )}
-        </motion.div>
 
-        {/* Complaint Detail Modal */}
-        <AnimatePresence>
-          {selectedComplaint && (
-            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <motion.div 
-                className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-6 md:p-8 border border-white/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-              >
-                <div className="flex justify-between items-start mb-6">
-                  <h2 className="text-2xl font-bold text-white">{selectedComplaint.title}</h2>
-                  <button 
-                    onClick={() => setSelectedComplaint(null)}
-                    className="text-white/60 hover:text-white transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="flex items-center text-white/80">
-                    <Calendar className="h-5 w-5 mr-2" />
-                    <span>Reported: {selectedComplaint.date}</span>
-                  </div>
-                  <div className="flex items-center text-white/80">
-                    <CheckCircle className="h-5 w-5 mr-2 text-green-400" />
-                    <span>Resolved: {selectedComplaint.resolvedDate}</span>
-                  </div>
-                  <div className="flex items-center text-white/80">
-                    <MapPin className="h-5 w-5 mr-2" />
-                    <span>{selectedComplaint.location}</span>
-                  </div>
-                  <div className="flex items-center text-white/80">
-                    <span>Category: {selectedComplaint.category}</span>
-                  </div>
-                </div>
-                
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
-                  <p className="text-white/80">{selectedComplaint.description}</p>
-                </div>
-                
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-white mb-2">Resolution Timeline</h3>
-                  <div className="space-y-3">
-                    {selectedComplaint.updates.map((update, index) => (
-                      <div key={index} className="flex">
-                        <div className="flex flex-col items-center mr-4">
-                          <div className="w-3 h-3 bg-indigo-400 rounded-full"></div>
-                          {index < selectedComplaint.updates.length - 1 && (
-                            <div className="w-0.5 h-12 bg-indigo-400/30 mt-1"></div>
-                          )}
-                        </div>
-                        <div className="pb-4">
-                          <p className="text-white font-medium">{update.message}</p>
-                          <p className="text-white/60 text-sm">{update.date}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">Your Feedback</h3>
-                  <div className="flex items-center mb-2">
-                    <div className="flex mr-2">
-                      {renderStars(selectedComplaint.rating)}
-                    </div>
-                    <span className="text-white/80">{selectedComplaint.rating}/5</span>
-                  </div>
-                  <p className="text-white/80 italic">"{selectedComplaint.feedback}"</p>
-                </div>
-              </motion.div>
+            <div className="transition-all duration-700 delay-350 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              <label className="block text-sm font-medium mb-2 opacity-90">Username</label>
+              <input
+                placeholder="Choose a username"
+                value={form.username}
+                onChange={(e) => update("username", e.target.value)}
+                required
+                className="w-full px-4 py-3.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 outline-none placeholder:text-white/60 shadow-lg"
+              />
             </div>
-          )}
-        </AnimatePresence>
+
+            <div className="transition-all duration-700 delay-400 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              <label className="block text-sm font-medium mb-2 opacity-90">Phone Number</label>
+              <input
+                placeholder="Enter your phone number"
+                value={form.phone}
+                onChange={(e) => update("phone", e.target.value)}
+                required
+                className="w-full px-4 py-3.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 outline-none placeholder:text-white/60 shadow-lg"
+              />
+            </div>
+
+            <div className="transition-all duration-700 delay-450 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              <label className="block text-sm font-medium mb-2 opacity-90">Email</label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={form.email}
+                onChange={(e) => update("email", e.target.value)}
+                required
+                className="w-full px-4 py-3.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 outline-none placeholder:text-white/60 shadow-lg"
+              />
+            </div>
+
+            <div className="transition-all duration-700 delay-500 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              <label className="block text-sm font-medium mb-2 opacity-90">Password</label>
+              <input
+                type="password"
+                placeholder="Create a password"
+                value={form.password}
+                onChange={(e) => update("password", e.target.value)}
+                required
+                className="w-full px-4 py-3.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 outline-none placeholder:text-white/60 shadow-lg"
+              />
+            </div>
+
+            <div className="transition-all duration-700 delay-550 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              <label className="block text-sm font-medium mb-2 opacity-90">Profile Picture</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => update("avatar", e.target.files[0])}
+                required
+                className="w-full px-4 py-3.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200 outline-none placeholder:text-white/60 shadow-lg file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white/20 file:text-white hover:file:bg-white/30"
+              />
+            </div>
+
+            {error && (
+              <div className="bg-red-400/20 text-red-100 p-3 rounded-lg text-sm border border-red-400/30 backdrop-blur-md transition-all duration-700 delay-600 ease-out ${
+                isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }">
+                {error}
+              </div>
+            )}
+
+            <div className="transition-all duration-700 delay-650 ease-out ${
+              isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-4 bg-white/90 text-gray-800 rounded-xl font-medium hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-opacity-50 disabled:opacity-70" >
+                {submitting ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing up...
+                  </span>
+                ) : (
+                  "Sign Up"
+                )}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-8 text-center transition-all duration-700 delay-700 ease-out ${
+            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }">
+            <p className="text-white/80 text-sm">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-blue-300 font-medium hover:text-white transition-colors duration-200"
+              >
+                Log in
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Right side - Info box with enhanced design */}
+        <div className={`w-full lg:w-3/5 flex justify-center lg:justify-end mt-10 lg:mt-0 ml-auto transition-all duration-1000 delay-300 ease-out ${
+          isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'
+        }`}>
+          <div className="group relative w-full max-w-xl cursor-pointer">
+            <div className="relative h-[600px] w-full rounded-3xl overflow-hidden shadow-2xl transform transition-all duration-500 group-hover:scale-[1.02] group-hover:shadow-2xl">
+              <img 
+                src="/images/cleangb2.jpg" 
+                alt="Join JanConnect community" 
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              {/* Enhanced gradient overlay for better text visibility */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/40 to-black/70"></div>
+              
+              {/* Text overlay with enhanced styling */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
+                <p className="text-4xl font-light text-white mb-4 tracking-wide">
+                    Report. Act. Transform.</p>
+                <p className="text-4xl font-light text-white mb-4 tracking-wide">
+                    Your voice can turn problems into progress.
+                </p>
+                <p className="text-xl text-white/90 font-medium">
+                  #JanConnect
+                </p>
+              </div>
+
+              {/* Subtle border effect on hover */}
+              <div className="absolute inset-0 rounded-3xl border border-white/10 group-hover:border-white/20 transition-all duration-500"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
