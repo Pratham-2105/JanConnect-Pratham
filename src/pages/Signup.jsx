@@ -33,7 +33,7 @@ export default function Signup() {
       alert(res.message || "Signup successful!");
       navigate("/login");
     } catch (err) {
-      setError(err.message || "Signup failed. Try again.");
+      setError(err?.response?.data?.message || "Signup failed. Try again.");
     } finally {
       setSubmitting(false);
     }

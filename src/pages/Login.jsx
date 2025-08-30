@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login as authLogin } from "../store/authSlice";
+import { loginUser,getCurrentUser } from "../api";
 
 export default function Login() {
 
   const navigate = useNavigate();
+  const dispatch = useDispatch()
   const [form, setForm] = useState({ email: "", password: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -16,29 +20,18 @@ export default function Login() {
   setSubmitting(true);
 
   try {
-    const res = await fetch("http://localhost:8000/api/v1/user/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
+    const session = await loginUser(form);
+    if(session){
+                const response = await getCurrentUser()
+                const userData = response.data.data
+                if(userData){
+                    dispatch(authLogin({userData}))
+                    navigate('/dashboard')          
+                }
+            }
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Login failed");
-    }
-
-    // Save user details in localStorage
-    localStorage.setItem("user", JSON.stringify(data.data.user)); 
-localStorage.setItem("accessToken", data.data.accessToken);   
-
-
-    // Navigate to dashboard
-    navigate("/dashboard");
   } catch (err) {
-    setError(err.message);
+    setError(err.response.data.message);
   } finally {
     setSubmitting(false);
   }
