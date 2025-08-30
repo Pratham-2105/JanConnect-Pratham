@@ -36,13 +36,15 @@ export default function Login() {
         if (userData) {
           dispatch(authLogin({ userData }));
         }
-      }
 
-      // Save user details in localStorage
-      localStorage.setItem("user", JSON.stringify(session.data.data.user));
-      localStorage.setItem("accessToken", session.data.data.accessToken);
-      // Navigate to dashboard
-      navigate("/dashboard");
+        // Save user details in localStorage
+        localStorage.setItem("user", JSON.stringify(session.data.data.user));
+        localStorage.setItem("accessToken", session.data.data.accessToken);
+
+        // Navigate to the user's page instead of dashboard
+        const userId = session.data.data.user._id; // or userData._id
+        navigate(`/user/${userId}`);
+      }
     } catch (err) {
       setError(err.response.data.message);
     } finally {

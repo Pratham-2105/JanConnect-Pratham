@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence,motion } from "framer-motion";
 import { ArrowLeft, CheckCircle, Star, Calendar, MapPin } from "lucide-react";
 
 export default function ResolvedComplaints() {

@@ -5,15 +5,21 @@ import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import Dashboard from "./pages/Dashboard";
+import UserPage from "./pages/UserPage";
+import RaiseComplaint from "./pages/RaiseComplaint";
+import TrackComplaint from "./pages/TrackComplaint";
+import ResolvedComplaints from "./pages/ResolvedComplaints";
 
 function LayoutWrapper({ children }) {
   const location = useLocation();
 
   // Routes where Header & Footer should be hidden
-  const hiddenRoutes = ["/signup", "/login", "/admin/login", "/dashboard"];
+  const hiddenRoutes = ["/signup", "/login", "/admin/login"];
 
-  const hideLayout = hiddenRoutes.includes(location.pathname);
+  // Hide layout if pathname matches any hidden route
+  // or starts with /user/
+  const hideLayout =
+    hiddenRoutes.includes(location.pathname) || location.pathname.startsWith("/user/");
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -33,7 +39,10 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/user/:userId" element={<UserPage />} />
+          <Route path="/user/:userId/raise" element={<RaiseComplaint />} />
+          <Route path="/user/:userId/track" element={<TrackComplaint />} />
+          <Route path="/user/:userId/resolved" element={<ResolvedComplaints />} />
         </Routes>
       </LayoutWrapper>
     </Router>
