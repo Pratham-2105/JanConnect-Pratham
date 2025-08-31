@@ -1,13 +1,37 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft, Camera, MapPin, AlertCircle, Upload, X, Navigation } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, MapPin, AlertCircle, Upload, X, Navigation, CheckCircle } from "lucide-react";
 import Autocomplete from "react-google-autocomplete";
 import { createReport } from '../api/report';
+
+// Simple Custom Modal Component
+const CustomModal = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
+        onClick={onClose}
+      />
+      
+      {/* Modal Content */}
+      <div className="relative z-10">
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export default function RaiseComplaint() {
   const navigate = useNavigate();
   const { userId } = useParams();
+  
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [submittedDetails, setSubmittedDetails] = useState(null);
+  
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -23,13 +47,13 @@ export default function RaiseComplaint() {
     urgency: "medium",
     media: null
   });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
 
-  // Google Maps API Key - Replace with your actual key
-  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -46,7 +70,6 @@ export default function RaiseComplaint() {
     }
   };
 
-  // Handle Google Places Autocomplete selection
   const handlePlaceSelected = (place) => {
     console.log('Selected place:', place);
     
@@ -54,7 +77,6 @@ export default function RaiseComplaint() {
       const lat = place.geometry.location.lat();
       const lng = place.geometry.location.lng();
       
-      // Extract address components
       let city = "", state = "", country = "";
       
       if (place.address_components) {
@@ -75,7 +97,7 @@ export default function RaiseComplaint() {
         ...prev,
         location: {
           address: place.formatted_address || place.name,
-          coordinates: [lng, lat], // longitude, latitude format for backend
+          coordinates: [lng, lat],
           placeId: place.place_id,
           city,
           state,
@@ -88,7 +110,6 @@ export default function RaiseComplaint() {
     }
   };
 
-  // Get current location using geolocation API
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by this browser");
@@ -109,7 +130,6 @@ export default function RaiseComplaint() {
         const { latitude, longitude } = position.coords;
         
         try {
-          // Reverse geocode to get address
           const response = await fetch(
             `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`
           );
@@ -119,7 +139,6 @@ export default function RaiseComplaint() {
           if (data.results && data.results.length > 0) {
             const result = data.results[0];
             
-            // Extract address components
             let city = "", state = "", country = "";
             
             result.address_components.forEach(component => {
@@ -156,7 +175,6 @@ export default function RaiseComplaint() {
         } catch (error) {
           console.error('Reverse geocoding error:', error);
           
-          // Even if reverse geocoding fails, we still have coordinates
           setFormData(prev => ({
             ...prev,
             location: {
@@ -195,13 +213,11 @@ export default function RaiseComplaint() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (50MB max)
       if (file.size > 50 * 1024 * 1024) {
         setError("File size must be less than 50MB");
         return;
       }
 
-      // Validate file type
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
       if (!validTypes.includes(file.type)) {
         setError("Only images (JPEG, PNG, WebP) and videos (MP4, WebM) are allowed");
@@ -211,7 +227,6 @@ export default function RaiseComplaint() {
       setFormData(prev => ({ ...prev, media: file }));
       setError("");
 
-      // Create preview URL
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
@@ -230,7 +245,6 @@ export default function RaiseComplaint() {
     setIsSubmitting(true);
     setError("");
 
-    // Validate location
     if (!formData.location.address || (formData.location.coordinates[0] === 0 && formData.location.coordinates[1] === 0)) {
       setError("Please select a valid location or use current location");
       setIsSubmitting(false);
@@ -238,42 +252,35 @@ export default function RaiseComplaint() {
     }
 
     try {
-      // Prepare FormData for multipart/form-data submission
       const submitFormData = new FormData();
       
-      // Add required fields
       submitFormData.append('title', formData.title);
       submitFormData.append('category', formData.category);
       submitFormData.append('description', formData.description);
       submitFormData.append('urgency', formData.urgency);
-      
-      // Add location data
       submitFormData.append('location[address]', formData.location.address);
       submitFormData.append('location[coordinates]', JSON.stringify(formData.location.coordinates));
       
-      // Add media file if present
       if (formData.media) {
         submitFormData.append('media', formData.media);
       }
 
       console.log('Submitting report with location:', formData.location);
 
-      // Call backend API
       const response = await createReport(submitFormData);
       
       console.log('Report created successfully:', response.data);
       
-      // Show success and navigate
-      const reportId = response.data.data.report.reportId;
-      const municipality = response.data.data.autoSelected?.municipality;
+      setSubmittedDetails({
+        reportId: response.data.data.report.reportId,
+        municipality: response.data.data.autoSelected?.municipality || 'Municipal Authority'
+      });
       
-      alert(`Report submitted successfully!\nReport ID: ${reportId}\nAssigned to: ${municipality || 'Municipal Authority'}`);
-      navigate(`/user/${userId}`);
+      setShowSuccessPopup(true);
 
     } catch (error) {
       console.error('Error submitting report:', error);
       
-      // Handle different types of errors
       if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else if (error.response?.status === 401) {
@@ -287,6 +294,11 @@ export default function RaiseComplaint() {
     }
   };
 
+  const closePopupAndNavigate = () => {
+    setShowSuccessPopup(false);
+    navigate(`/user/${userId}`);
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Background */}
@@ -294,8 +306,8 @@ export default function RaiseComplaint() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
-        ></div>
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       </div>
 
       {/* Header */}
@@ -325,9 +337,59 @@ export default function RaiseComplaint() {
             Raise a Complaint
           </motion.div>
           
-          <div className="w-10"></div>
+          <div className="w-10" />
         </div>
       </motion.header>
+
+      {/* Success Popup - Using Custom Modal */}
+      <CustomModal isOpen={showSuccessPopup} onClose={closePopupAndNavigate}>
+        <AnimatePresence>
+          {showSuccessPopup && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-6 w-full max-w-md border border-white/20"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-10 w-10 text-white" />
+                </div>
+              </div>
+
+              <h3 className="text-xl font-bold text-white text-center mb-2">
+                Report Submitted Successfully!
+              </h3>
+
+              <div className="text-center space-y-3">
+                <div className="bg-green-500/10 border border-green-400/30 rounded-xl p-4">
+                  <p className="text-green-200 text-sm mb-2">
+                    <strong>Report ID:</strong> {submittedDetails?.reportId}
+                  </p>
+                  <p className="text-green-200 text-sm">
+                    <strong>Assigned to:</strong> {submittedDetails?.municipality}
+                  </p>
+                </div>
+
+                <p className="text-white/80 text-sm">
+                  Your complaint has been successfully submitted and will be reviewed by the municipal authority.
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <motion.button
+                  onClick={closePopupAndNavigate}
+                  className="flex-1 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  View My Reports
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </CustomModal>
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4 relative z-10 mt-16">
@@ -412,7 +474,6 @@ export default function RaiseComplaint() {
               </label>
               
               <div className="space-y-3">
-                {/* Google Places Autocomplete */}
                 <div className="relative">
                   <Autocomplete
                     apiKey={GOOGLE_MAPS_API_KEY}
@@ -421,7 +482,7 @@ export default function RaiseComplaint() {
                     onChange={(e) => handleInputChange({ target: { name: 'address', value: e.target.value } })}
                     options={{
                       types: [],
-                      componentRestrictions: { country: "in" }, // Restrict to India
+                      componentRestrictions: { country: "in" },
                       fields: ["address_components", "geometry", "formatted_address", "place_id", "name"]
                     }}
                     className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60"
@@ -431,7 +492,6 @@ export default function RaiseComplaint() {
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
                 </div>
                 
-                {/* Current Location Button */}
                 <motion.button
                   type="button"
                   onClick={getCurrentLocation}
@@ -443,8 +503,8 @@ export default function RaiseComplaint() {
                   {isGettingLocation ? (
                     <>
                       <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
                       Getting location...
                     </>
@@ -456,7 +516,6 @@ export default function RaiseComplaint() {
                   )}
                 </motion.button>
 
-                {/* Location Info Display */}
                 {formData.location.coordinates[0] !== 0 && formData.location.coordinates[1] !== 0 && (
                   <div className="p-3 bg-green-500/10 border border-green-400/30 rounded-xl">
                     <p className="text-green-200 text-sm">
@@ -499,7 +558,6 @@ export default function RaiseComplaint() {
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">Add Photo/Video (Optional)</label>
               
-              {/* File Preview */}
               {previewUrl && (
                 <div className="mb-3 relative">
                   {formData.media?.type.startsWith('image/') ? (
@@ -518,7 +576,6 @@ export default function RaiseComplaint() {
                 </div>
               )}
               
-              {/* File Upload Area */}
               <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl bg-white/5 hover:bg-white/10 transition-colors duration-200 cursor-pointer">
                 <div className="text-center">
                   <Upload className="h-8 w-8 text-white/60 mx-auto mb-2" />
@@ -545,8 +602,8 @@ export default function RaiseComplaint() {
               {isSubmitting ? (
                 <span className="flex items-center justify-center">
                   <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Submitting...
                 </span>
