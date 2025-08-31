@@ -25,7 +25,7 @@ function LayoutWrapper({ children }) {
     <div className="flex flex-col min-h-screen">
       {!hideLayout && <Header />}
       <main className="flex-grow">{children}</main>
-      {!hideLayout && <Footer />}
+      {/* {!hideLayout && <Footer />} */}
     </div>
   );
 }
