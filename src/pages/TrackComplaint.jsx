@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft, Search, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  ArrowLeft, Search, Clock, CheckCircle, XCircle, AlertTriangle, 
+  FileText, Calendar, MapPin, Building, User, Loader2, Plus, Filter
+} from "lucide-react";
+import { getUserReports } from '../api/report';
 
 export default function TrackComplaint() {
   const navigate = useNavigate();
@@ -9,195 +13,359 @@ export default function TrackComplaint() {
   const [searchQuery, setSearchQuery] = useState("");
   const [complaints, setComplaints] = useState([]);
   const [filteredComplaints, setFilteredComplaints] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
-  // Sample data
   useEffect(() => {
-    const sampleComplaints = [
-      {
-        id: "COMP-001",
-        title: "Pothole on Main Street",
-        category: "Infrastructure",
-        status: "in-progress",
-        date: "2023-10-15",
-        description: "Large pothole causing traffic issues",
-        updates: [
-          { date: "2023-10-16", message: "Complaint received and assigned to department" },
-          { date: "2023-10-18", message: "Site inspection scheduled" }
-        ]
-      },
-      {
-        id: "COMP-002",
-        title: "Garbage not collected",
-        category: "Sanitation",
-        status: "resolved",
-        date: "2023-10-10",
-        description: "Garbage hasn't been collected for 5 days",
-        updates: [
-          { date: "2023-10-11", message: "Complaint received" },
-          { date: "2023-10-12", message: "Collection scheduled" },
-          { date: "2023-10-13", message: "Issue resolved" }
-        ]
-      },
-      {
-        id: "COMP-003",
-        title: "Broken street light",
-        category: "Public Safety",
-        status: "pending",
-        date: "2023-10-20",
-        description: "Street light not working on Oak Avenue",
-        updates: [
-          { date: "2023-10-20", message: "Complaint received" }
-        ]
+    const fetchUserComplaints = async () => {
+      setLoading(true);
+      setError("");
+      
+      try {
+        const response = await getUserReports({ page: 1, limit: 50 });
+        const complaintsData = response.data.data.reports || [];
+        setComplaints(complaintsData);
+        setFilteredComplaints(complaintsData);
+      } catch (err) {
+        console.error('Error fetching complaints:', err);
+        
+        if (err.response?.status === 401) {
+          setError("Please login again to view your complaints");
+          navigate('/login');
+        } else if (err.response?.status === 404) {
+          setError("No complaints found");
+        } else {
+          setError(err.response?.data?.message || "Failed to load complaints");
+        }
+      } finally {
+        setLoading(false);
       }
-    ];
-    
-    setComplaints(sampleComplaints);
-    setFilteredComplaints(sampleComplaints);
-  }, []);
+    };
 
-  const handleSearch = (e) => {
-    const query = e.target.value.toLowerCase();
-    setSearchQuery(query);
-    
-    if (query === "") {
-      setFilteredComplaints(complaints);
-    } else {
-      const filtered = complaints.filter(complaint => 
+    fetchUserComplaints();
+  }, [userId, navigate]);
+
+  useEffect(() => {
+    let filtered = complaints;
+
+    if (selectedStatus !== "all") {
+      filtered = filtered.filter(complaint => complaint.status === selectedStatus);
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(complaint => 
         complaint.title.toLowerCase().includes(query) || 
-        complaint.id.toLowerCase().includes(query) ||
+        complaint.reportId.toLowerCase().includes(query) ||
         complaint.category.toLowerCase().includes(query)
       );
-      setFilteredComplaints(filtered);
     }
+
+    setFilteredComplaints(filtered);
+  }, [complaints, selectedStatus, searchQuery]);
+
+  const getStatusConfig = (status) => {
+    const configs = {
+      "resolved": { 
+        icon: CheckCircle, 
+        bg: "bg-emerald-500/10", 
+        text: "text-emerald-400",
+        border: "border-emerald-500/20"
+      },
+      "in-progress": { 
+        icon: Clock, 
+        bg: "bg-blue-500/10", 
+        text: "text-blue-400",
+        border: "border-blue-500/20"
+      },
+      "acknowledged": { 
+        icon: AlertTriangle, 
+        bg: "bg-amber-500/10", 
+        text: "text-amber-400",
+        border: "border-amber-500/20"
+      },
+      "pending": { 
+        icon: Clock, 
+        bg: "bg-orange-500/10", 
+        text: "text-orange-400",
+        border: "border-orange-500/20"
+      },
+      "rejected": { 
+        icon: XCircle, 
+        bg: "bg-red-500/10", 
+        text: "text-red-400",
+        border: "border-red-500/20"
+      }
+    };
+    return configs[status] || configs["pending"];
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "resolved": return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case "in-progress": return <Clock className="h-5 w-5 text-blue-500" />;
-      case "pending": return <AlertCircle className="h-5 w-5 text-yellow-500" />;
-      default: return <XCircle className="h-5 w-5 text-red-500" />;
-    }
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "resolved": return "bg-green-500/20 text-green-400";
-      case "in-progress": return "bg-blue-500/20 text-blue-400";
-      case "pending": return "bg-yellow-500/20 text-yellow-400";
-      default: return "bg-red-500/20 text-red-400";
-    }
+  const getStatusCount = (status) => {
+    return complaints.filter(c => c.status === status).length;
   };
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background matching the login page exactly */}
+      {/* Background */}
       <div className="absolute inset-0 z-0">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
-        ></div>
-        {/* Exact same glassmorphism overlay as login page */}
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       </div>
 
       {/* Header */}
       <motion.header 
-        className="fixed top-0 left-0 w-full z-50 bg-white/10 backdrop-blur-md"
+        className="sticky top-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/10"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        transition={{ type: "spring", damping: 25, stiffness: 400 }}
       >
-        <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
-          <motion.button 
-            onClick={() => navigate(-1)}
-            className="flex items-center text-gray-800 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/20"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            Back
-          </motion.button>
-          
-          <motion.div 
-            className="text-xl md:text-2xl font-bold text-gray-800"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            Track Your Complaints
-          </motion.div>
-          
-          <div className="w-10"></div> {/* Spacer for balance */}
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <motion.button 
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-300 text-white border border-white/20"
+              whileHover={{ scale: 1.02, x: -2 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ArrowLeft size={18} />
+              <span className="font-medium">Back</span>
+            </motion.button>
+            
+            <div className="text-center">
+              <h1 className="text-2xl font-bold text-white">My Complaints</h1>
+              <p className="text-sm text-white/60 mt-1">{complaints.length} total complaints</p>
+            </div>
+            
+            <motion.button
+              onClick={() => navigate(`/user/${userId}/raise`)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-lg transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Plus size={18} />
+              <span className="font-medium">New</span>
+            </motion.button>
+          </div>
         </div>
       </motion.header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center p-4 relative z-10 mt-16">
+      <div className="flex-1 relative z-10 px-4 py-6 max-w-7xl mx-auto w-full">
+        {/* Quick Stats */}
         <motion.div 
-          className="w-full max-w-4xl bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-6 md:p-8 border border-white/20 mb-6"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
         >
-          <div className="flex items-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center mr-4">
-              <Search className="h-6 w-6 text-white" />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Your Complaints</h1>
-          </div>
+          {[
+            { label: "Total", count: complaints.length, status: "all" },
+            { label: "Pending", count: getStatusCount("pending"), status: "pending" },
+            { label: "In Progress", count: getStatusCount("in-progress"), status: "in-progress" },
+            { label: "Resolved", count: getStatusCount("resolved"), status: "resolved" }
+          ].map((stat, index) => (
+            <motion.button
+              key={stat.label}
+              onClick={() => setSelectedStatus(stat.status)}
+              className={`p-4 rounded-2xl border transition-all duration-300 text-left ${
+                selectedStatus === stat.status 
+                  ? 'bg-white/20 border-white/30' 
+                  : 'bg-white/10 border-white/20 hover:bg-white/15'
+              }`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="text-2xl font-bold text-white">{stat.count}</div>
+              <div className="text-sm text-white/70">{stat.label}</div>
+            </motion.button>
+          ))}
+        </motion.div>
 
-          {/* Search Bar */}
-          <div className="relative mb-6">
+        {/* Search & Filter Bar */}
+        <motion.div 
+          className="flex flex-col md:flex-row gap-4 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40" size={20} />
             <input
               type="text"
               value={searchQuery}
-              onChange={handleSearch}
-              placeholder="Search by complaint ID, title, or category..."
-              className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search complaints by title, ID, or category..."
+              className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 text-white placeholder-white/50 focus:border-white/40 focus:outline-none transition-all duration-300"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
-          </div>
-
-          {/* Complaints List */}
-          <div className="space-y-4">
-            {filteredComplaints.length > 0 ? (
-              filteredComplaints.map((complaint, index) => (
-                <motion.div 
-                  key={complaint.id}
-                  className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-200"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{complaint.title}</h3>
-                      <p className="text-white/60 text-sm">ID: {complaint.id} • {complaint.date}</p>
-                    </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)} flex items-center`}>
-                      {getStatusIcon(complaint.status)}
-                      <span className="ml-1 capitalize">{complaint.status.replace("-", " ")}</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-white/80 text-sm mb-3">{complaint.description}</p>
-                  
-                  <div className="text-xs text-white/60">
-                    <p className="font-medium mb-1">Latest Update:</p>
-                    <p>{complaint.updates[complaint.updates.length - 1].message}</p>
-                    <p className="mt-1">{complaint.updates[complaint.updates.length - 1].date}</p>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-white/60">
-                <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No complaints found matching your search.</p>
-              </div>
-            )}
           </div>
         </motion.div>
+
+        {/* Error State */}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              className="mb-8 p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-center"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <XCircle className="mx-auto mb-3 text-red-400" size={48} />
+              <p className="text-red-300 text-lg font-medium">{error}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="animate-spin text-white mb-4" size={48} />
+            <p className="text-white/70 text-lg">Loading your complaints...</p>
+          </div>
+        )}
+
+        {/* Complaints List */}
+        {!loading && !error && (
+          <div className="space-y-4">
+            <AnimatePresence mode="popLayout">
+              {filteredComplaints.length > 0 ? (
+                filteredComplaints.map((complaint, index) => {
+                  const statusConfig = getStatusConfig(complaint.status);
+                  const StatusIcon = statusConfig.icon;
+                  
+                  return (
+                    <motion.div
+                      key={complaint._id || complaint.reportId}
+                      className="group bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:bg-white/15 hover:border-white/30 hover:shadow-2xl"
+                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                      transition={{ 
+                        duration: 0.4, 
+                        delay: index * 0.05,
+                        type: "spring",
+                        stiffness: 100
+                      }}
+                      whileHover={{ y: -4 }}
+                      onClick={() => navigate(`/complaint/${complaint.reportId}`)}
+                      layout
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-semibold text-white group-hover:text-blue-300 transition-colors mb-2 line-clamp-1">
+                            {complaint.title}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-white/60">
+                            <span className="flex items-center gap-1">
+                              <FileText size={14} />
+                              {complaint.reportId}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar size={14} />
+                              {formatDate(complaint.createdAt || complaint.date)}
+                            </span>
+                            <span className="px-2 py-1 bg-white/10 rounded-lg text-xs">
+                              {complaint.category}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border} border`}>
+                          <StatusIcon size={16} />
+                          <span className="capitalize">{complaint.status.replace('-', ' ')}</span>
+                        </div>
+                      </div>
+
+                      <p className="text-white/80 mb-4 line-clamp-2 leading-relaxed">
+                        {complaint.description}
+                      </p>
+
+                      {/* Location & Municipality */}
+                      <div className="flex flex-wrap gap-4 text-sm text-white/60 mb-4">
+                        {complaint.location?.address && (
+                          <span className="flex items-center gap-1">
+                            <MapPin size={14} />
+                            <span className="truncate max-w-xs">{complaint.location.address}</span>
+                          </span>
+                        )}
+                        {complaint.municipality?.name && (
+                          <span className="flex items-center gap-1">
+                            <Building size={14} />
+                            {complaint.municipality.name}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
+                        <div className="flex items-center gap-4 text-sm text-white/60">
+                          <span>👍 {complaint.upvoteCount || 0}</span>
+                          <span>Priority: {complaint.priority || 1}/5</span>
+                          {complaint.rating && <span>⭐ {complaint.rating}/5</span>}
+                        </div>
+                        <div className="text-white/40 text-sm">Click to view details</div>
+                      </div>
+                    </motion.div>
+                  );
+                })
+              ) : (
+                <motion.div 
+                  className="text-center py-20"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <FileText className="mx-auto mb-6 text-white/30" size={80} />
+                  {searchQuery || selectedStatus !== "all" ? (
+                    <div>
+                      <h3 className="text-2xl font-semibold text-white mb-3">No matches found</h3>
+                      <p className="text-white/60 mb-6 max-w-md mx-auto">
+                        Try adjusting your search terms or filter to find what you're looking for.
+                      </p>
+                      <motion.button
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSelectedStatus("all");
+                        }}
+                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 transition-all duration-300"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Clear filters
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <div>
+                      <h3 className="text-2xl font-semibold text-white mb-3">No complaints yet</h3>
+                      <p className="text-white/60 mb-8 max-w-md mx-auto">
+                        You haven't submitted any complaints. Start by reporting an issue in your area.
+                      </p>
+                      <motion.button
+                        onClick={() => navigate(`/raise-complaint/${userId}`)}
+                        className="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Submit Your First Complaint
+                      </motion.button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );
