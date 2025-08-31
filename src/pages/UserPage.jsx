@@ -488,13 +488,13 @@ const departmentPerformanceData = [
       
       <div className="relative w-full max-w-6xl mx-auto h-[28rem] md:h-[22rem] ">
         {/* Lion Component as background */}
-        <div className="absolute inset-0 z-0">
+        <div className="absolute top-0 right-80 bottom-0 z-0 w-[60%] md:w-[50%]">
           <LionComponent />
         </div>
 
         {/* Welcome Text overlay */}
         <motion.div
-          className={`absolute top-30 left-0 transform translate-x 4 translate-y-0.01 transition-all duration-700 delay-400 ease-out whitespace-nowrap ${
+          className={`absolute top-1/3 md:left-0 transition-all duration-700 delay-400 ease-out whitespace-nowrap ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -502,13 +502,11 @@ const departmentPerformanceData = [
             Welcome, {user.name} 🎉
           </h1>
           <p className="text-white/70 text-lg">
-            Press and drag to blow the wind .The lion will surely appreciate.
+            Press and drag to blow the wind. The lion will surely appreciate.
           </p>
         </motion.div>
-        <div className="absolute inset-0 z-0">
-          <LionComponent />
-        </div>
-      </div>
+</div>
+
 
       <div className="flex-1 flex items-center justify-center p-4 relative z-10 mt-8">
         <div className="w-full max-w-6xl">
