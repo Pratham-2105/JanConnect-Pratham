@@ -521,9 +521,9 @@ export default function RaiseComplaint() {
                     <p className="text-green-200 text-sm">
                       ✅ Location captured: {formData.location.city && `${formData.location.city}, `}{formData.location.state}
                     </p>
-                    <p className="text-green-200/70 text-xs">
+                    {/* <p className="text-green-200/70 text-xs">
                       Coordinates: {formData.location.coordinates[1].toFixed(6)}, {formData.location.coordinates[0].toFixed(6)}
-                    </p>
+                    </p> */}
                   </div>
                 )}
               </div>

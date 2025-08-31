@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Search, Clock, CheckCircle, XCircle, AlertTriangle, 
-  FileText, Calendar, MapPin, Building, User, Loader2, Plus, Filter
+  FileText, Calendar, MapPin, Building, User, Loader2, Plus, Star,
+  ChevronDown, ChevronUp
 } from "lucide-react";
 import { getUserReports } from '../api/report';
 
@@ -16,6 +17,7 @@ export default function TrackComplaint() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedComplaint, setSelectedComplaint] = useState(null); // For inline details
 
   useEffect(() => {
     const fetchUserComplaints = async () => {
@@ -109,8 +111,38 @@ export default function TrackComplaint() {
     });
   };
 
+  const formatDetailDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const getStatusCount = (status) => {
     return complaints.filter(c => c.status === status).length;
+  };
+
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`h-4 w-4 ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-white/30"}`}
+      />
+    ));
+  };
+
+  const getLatestUpdate = (updates) => {
+    if (!updates || updates.length === 0) {
+      return { message: "No updates available", date: null };
+    }
+    return updates[updates.length - 1];
+  };
+
+  const toggleComplaintDetails = (complaint) => {
+    setSelectedComplaint(selectedComplaint?.reportId === complaint.reportId ? null : complaint);
   };
 
   return (
@@ -126,246 +158,322 @@ export default function TrackComplaint() {
 
       {/* Header */}
       <motion.header 
-        className="sticky top-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/10"
+        className="fixed top-0 left-0 w-full z-50 bg-white/10 backdrop-blur-md"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 25, stiffness: 400 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
       >
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <motion.button 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-300 text-white border border-white/20"
-              whileHover={{ scale: 1.02, x: -2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <ArrowLeft size={18} />
-              <span className="font-medium">Back</span>
-            </motion.button>
-            
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-white">My Complaints</h1>
-              <p className="text-sm text-white/60 mt-1">{complaints.length} total complaints</p>
-            </div>
-            
-            <motion.button
-              onClick={() => navigate(`/user/${userId}/raise`)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-lg transition-all duration-300"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Plus size={18} />
-              <span className="font-medium">New</span>
-            </motion.button>
-          </div>
+        <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+          <motion.button 
+            onClick={() => navigate(-1)}
+            className="flex items-center text-gray-800 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/20"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Back
+          </motion.button>
+          
+          <motion.div 
+            className="text-xl md:text-2xl font-bold text-gray-800"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            Track Your Complaints
+          </motion.div>
+          
+          <div className="w-10"></div>
         </div>
       </motion.header>
 
-      <div className="flex-1 relative z-10 px-4 py-6 max-w-7xl mx-auto w-full">
-        {/* Quick Stats */}
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col items-center p-4 relative z-10 mt-16">
         <motion.div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          className="w-full max-w-4xl bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-6 md:p-8 border border-white/20"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5 }}
         >
-          {[
-            { label: "Total", count: complaints.length, status: "all" },
-            { label: "Pending", count: getStatusCount("pending"), status: "pending" },
-            { label: "In Progress", count: getStatusCount("in-progress"), status: "in-progress" },
-            { label: "Resolved", count: getStatusCount("resolved"), status: "resolved" }
-          ].map((stat, index) => (
-            <motion.button
-              key={stat.label}
-              onClick={() => setSelectedStatus(stat.status)}
-              className={`p-4 rounded-2xl border transition-all duration-300 text-left ${
-                selectedStatus === stat.status 
-                  ? 'bg-white/20 border-white/30' 
-                  : 'bg-white/10 border-white/20 hover:bg-white/15'
-              }`}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ scale: 1.02 }}
-            >
-              <div className="text-2xl font-bold text-white">{stat.count}</div>
-              <div className="text-sm text-white/70">{stat.label}</div>
-            </motion.button>
-          ))}
-        </motion.div>
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-teal-500 rounded-full flex items-center justify-center mr-4">
+              <Search className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">Your Complaints</h1>
+              <p className="text-white/60 text-sm mt-1">{complaints.length} total complaints</p>
+            </div>
+          </div>
 
-        {/* Search & Filter Bar */}
-        <motion.div 
-          className="flex flex-col md:flex-row gap-4 mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40" size={20} />
+          {/* Quick Stats */}
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            {[
+              { label: "Total", count: complaints.length, status: "all" },
+              { label: "Pending", count: getStatusCount("pending"), status: "pending" },
+              { label: "In Progress", count: getStatusCount("in-progress"), status: "in-progress" },
+              { label: "Resolved", count: getStatusCount("resolved"), status: "resolved" }
+            ].map((stat, index) => (
+              <motion.button
+                key={stat.label}
+                onClick={() => setSelectedStatus(stat.status)}
+                className={`p-4 rounded-2xl border transition-all duration-300 text-left ${
+                  selectedStatus === stat.status 
+                    ? 'bg-white/20 border-white/30' 
+                    : 'bg-white/10 border-white/20 hover:bg-white/15'
+                }`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="text-2xl font-bold text-white">{stat.count}</div>
+                <div className="text-sm text-white/70">{stat.label}</div>
+              </motion.button>
+            ))}
+          </motion.div>
+
+          {/* Search Bar */}
+          <div className="relative mb-6">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search complaints by title, ID, or category..."
-              className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 text-white placeholder-white/50 focus:border-white/40 focus:outline-none transition-all duration-300"
+              className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60"
             />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
           </div>
-        </motion.div>
 
-        {/* Error State */}
-        <AnimatePresence>
-          {error && (
-            <motion.div 
-              className="mb-8 p-6 bg-red-500/10 border border-red-500/20 rounded-2xl text-center"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-            >
-              <XCircle className="mx-auto mb-3 text-red-400" size={48} />
-              <p className="text-red-300 text-lg font-medium">{error}</p>
-            </motion.div>
+          {/* Error State */}
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                className="mb-6 p-4 bg-red-500/20 border border-red-400 rounded-xl text-red-200 text-center"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+              >
+                <XCircle className="h-6 w-6 mx-auto mb-2" />
+                <p>{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-8 text-white/60">
+              <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin" />
+              <p>Loading your complaints...</p>
+            </div>
           )}
-        </AnimatePresence>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="animate-spin text-white mb-4" size={48} />
-            <p className="text-white/70 text-lg">Loading your complaints...</p>
-          </div>
-        )}
-
-        {/* Complaints List */}
-        {!loading && !error && (
-          <div className="space-y-4">
-            <AnimatePresence mode="popLayout">
-              {filteredComplaints.length > 0 ? (
-                filteredComplaints.map((complaint, index) => {
-                  const statusConfig = getStatusConfig(complaint.status);
-                  const StatusIcon = statusConfig.icon;
-                  
-                  return (
-                    <motion.div
-                      key={complaint._id || complaint.reportId}
-                      className="group bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:bg-white/15 hover:border-white/30 hover:shadow-2xl"
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                      transition={{ 
-                        duration: 0.4, 
-                        delay: index * 0.05,
-                        type: "spring",
-                        stiffness: 100
-                      }}
-                      whileHover={{ y: -4 }}
-                      onClick={() => navigate(`/complaint/${complaint.reportId}`)}
-                      layout
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold text-white group-hover:text-blue-300 transition-colors mb-2 line-clamp-1">
-                            {complaint.title}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-white/60">
-                            <span className="flex items-center gap-1">
-                              <FileText size={14} />
-                              {complaint.reportId}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar size={14} />
-                              {formatDate(complaint.createdAt || complaint.date)}
-                            </span>
-                            <span className="px-2 py-1 bg-white/10 rounded-lg text-xs">
-                              {complaint.category}
-                            </span>
+          {/* Complaints List */}
+          {!loading && !error && (
+            <div className="space-y-4">
+              <AnimatePresence mode="popLayout">
+                {filteredComplaints.length > 0 ? (
+                  filteredComplaints.map((complaint, index) => {
+                    const statusConfig = getStatusConfig(complaint.status);
+                    const StatusIcon = statusConfig.icon;
+                    const isSelected = selectedComplaint?.reportId === complaint.reportId;
+                    
+                    return (
+                      <motion.div
+                        key={complaint._id || complaint.reportId}
+                        className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ 
+                          duration: 0.3, 
+                          delay: index * 0.05
+                        }}
+                        layout
+                      >
+                        {/* Complaint Card */}
+                        <div 
+                          className="p-4 cursor-pointer hover:bg-white/10 transition-all duration-200"
+                          onClick={() => toggleComplaintDetails(complaint)}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-white">{complaint.title}</h3>
+                              <p className="text-white/60 text-sm">ID: {complaint.reportId} • {formatDate(complaint.createdAt || complaint.date)}</p>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border} border`}>
+                                <StatusIcon size={14} />
+                                <span className="capitalize">{complaint.status.replace('-', ' ')}</span>
+                              </div>
+                              {isSelected ? <ChevronUp size={20} className="text-white/60" /> : <ChevronDown size={20} className="text-white/60" />}
+                            </div>
+                          </div>
+                          
+                          <p className="text-white/80 text-sm mb-3 line-clamp-2">{complaint.description}</p>
+                          
+                          {/* Location & Stats */}
+                          <div className="flex justify-between items-center text-xs text-white/60">
+                            {complaint.location?.address && (
+                              <span className="flex items-center gap-1">
+                                <MapPin size={12} />
+                                <span className="truncate max-w-xs">{complaint.location.address}</span>
+                              </span>
+                            )}
+                            
+                            <div className="flex items-center gap-3">
+                              <span>👍 {complaint.upvoteCount || 0}</span>
+                              <span>Priority: {complaint.priority || 1}/5</span>
+                            </div>
                           </div>
                         </div>
-                        
-                        <div className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${statusConfig.bg} ${statusConfig.text} ${statusConfig.border} border`}>
-                          <StatusIcon size={16} />
-                          <span className="capitalize">{complaint.status.replace('-', ' ')}</span>
-                        </div>
-                      </div>
 
-                      <p className="text-white/80 mb-4 line-clamp-2 leading-relaxed">
-                        {complaint.description}
-                      </p>
+                        {/* Expanded Details */}
+                        <AnimatePresence>
+                          {isSelected && (
+                            <motion.div
+                              className="border-t border-white/10"
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="p-6 bg-white/5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  {/* Left Column */}
+                                  <div className="space-y-4">
+                                    <div>
+                                      <h4 className="text-sm font-medium text-white/80 mb-2">Full Description</h4>
+                                      <p className="text-white/90 text-sm leading-relaxed">{complaint.description}</p>
+                                    </div>
+                                    
+                                    {complaint.location?.address && (
+                                      <div>
+                                        <h4 className="text-sm font-medium text-white/80 mb-2">Location</h4>
+                                        <div className="flex items-center gap-2 text-white/90">
+                                          <MapPin size={14} />
+                                          <span>{complaint.location.address}</span>
+                                        </div>
+                                      </div>
+                                    )}
 
-                      {/* Location & Municipality */}
-                      <div className="flex flex-wrap gap-4 text-sm text-white/60 mb-4">
-                        {complaint.location?.address && (
-                          <span className="flex items-center gap-1">
-                            <MapPin size={14} />
-                            <span className="truncate max-w-xs">{complaint.location.address}</span>
-                          </span>
-                        )}
-                        {complaint.municipality?.name && (
-                          <span className="flex items-center gap-1">
-                            <Building size={14} />
-                            {complaint.municipality.name}
-                          </span>
-                        )}
-                      </div>
+                                    {/* Municipality & Department */}
+                                    {(complaint.municipality?.name || complaint.department?.name) && (
+                                      <div>
+                                        <h4 className="text-sm font-medium text-white/80 mb-2">Assignment</h4>
+                                        <div className="space-y-1">
+                                          {complaint.municipality?.name && (
+                                            <div className="flex items-center gap-2 text-white/90">
+                                              <Building size={14} />
+                                              <span>{complaint.municipality.name}</span>
+                                            </div>
+                                          )}
+                                          {complaint.department?.name && (
+                                            <div className="flex items-center gap-2 text-white/90">
+                                              <User size={14} />
+                                              <span>{complaint.department.name}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
 
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                        <div className="flex items-center gap-4 text-sm text-white/60">
-                          <span>👍 {complaint.upvoteCount || 0}</span>
-                          <span>Priority: {complaint.priority || 1}/5</span>
-                          {complaint.rating && <span>⭐ {complaint.rating}/5</span>}
-                        </div>
-                        <div className="text-white/40 text-sm">Click to view details</div>
+                                  {/* Right Column */}
+                                  <div className="space-y-4">
+                                    {/* Timeline */}
+                                    {complaint.updates && complaint.updates.length > 0 && (
+                                      <div>
+                                        <h4 className="text-sm font-medium text-white/80 mb-3">Updates Timeline</h4>
+                                        <div className="space-y-3 max-h-48 overflow-y-auto">
+                                          {complaint.updates.map((update, updateIndex) => (
+                                            <div key={updateIndex} className="flex gap-3">
+                                              <div className="flex flex-col items-center">
+                                                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                                                {updateIndex < complaint.updates.length - 1 && (
+                                                  <div className="w-0.5 h-8 bg-blue-400/30 mt-1"></div>
+                                                )}
+                                              </div>
+                                              <div className="flex-1">
+                                                <p className="text-white/90 text-sm">{update.message}</p>
+                                                <p className="text-white/50 text-xs mt-1">{formatDate(update.date)}</p>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Rating & Feedback */}
+                                    {(complaint.rating || complaint.feedback) && (
+                                      <div>
+                                        <h4 className="text-sm font-medium text-white/80 mb-2">Your Feedback</h4>
+                                        {complaint.rating && (
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <div className="flex">
+                                              {renderStars(complaint.rating)}
+                                            </div>
+                                            <span className="text-white/80 text-sm">{complaint.rating}/5</span>
+                                          </div>
+                                        )}
+                                        {complaint.feedback && (
+                                          <p className="text-white/80 text-sm italic">"{complaint.feedback}"</p>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <motion.div 
+                    className="text-center py-8 text-white/60"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    {searchQuery || selectedStatus !== "all" ? (
+                      <div>
+                        <p className="mb-4">No complaints found matching your filters.</p>
+                        <button 
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSelectedStatus("all");
+                          }}
+                          className="text-blue-400 hover:text-blue-300 underline"
+                        >
+                          Clear filters
+                        </button>
                       </div>
-                    </motion.div>
-                  );
-                })
-              ) : (
-                <motion.div 
-                  className="text-center py-20"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <FileText className="mx-auto mb-6 text-white/30" size={80} />
-                  {searchQuery || selectedStatus !== "all" ? (
-                    <div>
-                      <h3 className="text-2xl font-semibold text-white mb-3">No matches found</h3>
-                      <p className="text-white/60 mb-6 max-w-md mx-auto">
-                        Try adjusting your search terms or filter to find what you're looking for.
-                      </p>
-                      <motion.button
-                        onClick={() => {
-                          setSearchQuery("");
-                          setSelectedStatus("all");
-                        }}
-                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 transition-all duration-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        Clear filters
-                      </motion.button>
-                    </div>
-                  ) : (
-                    <div>
-                      <h3 className="text-2xl font-semibold text-white mb-3">No complaints yet</h3>
-                      <p className="text-white/60 mb-8 max-w-md mx-auto">
-                        You haven't submitted any complaints. Start by reporting an issue in your area.
-                      </p>
-                      <motion.button
-                        onClick={() => navigate(`/raise-complaint/${userId}`)}
-                        className="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:shadow-xl transition-all duration-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        Submit Your First Complaint
-                      </motion.button>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+                    ) : (
+                      <div>
+                        <p className="mb-6">You haven't submitted any complaints yet.</p>
+                        <motion.button
+                          onClick={() => navigate(`/user/${userId}/raise`)}
+                          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          Submit Your First Complaint
+                        </motion.button>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
