@@ -18,6 +18,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Globe3D } from "../components/Globe3D";
+import LionComponent from "../pages/LionComponent";
 import {
   BarChart,
   Bar,
@@ -55,151 +56,27 @@ export default function UserPage() {
     Illinois: ["Chicago Police", "Springfield PD", "Peoria Sheriff"],
   };
 
-  // Sample trending complaints data
   const trendingComplaints = [
-    {
-      id: 1,
-      area: "Mumbai",
-      title: "Water supply issue in Andheri",
-      reports: 245,
-      severity: "High",
-      time: "2 hours ago",
-      lat: 34.05,
-      lon: -218.24,
-    },
-    {
-      id: 2,
-      area: "Delhi",
-      title: "Street lights not functioning in Connaught Place",
-      reports: 189,
-      severity: "Medium",
-      time: "5 hours ago",
-      lat: 32.78,
-      lon: -96.8,
-    },
-    {
-      id: 3,
-      area: "Bengaluru",
-      title: "Garbage collection delays in Whitefield",
-      reports: 167,
-      severity: "High",
-      time: "1 day ago",
-      lat: 40.71,
-      lon: 374.01,
-    },
-    {
-      id: 4,
-      area: "Hyderabad",
-      title: "Potholes causing traffic jams in Hitech City",
-      reports: 142,
-      severity: "Medium",
-      time: "1 day ago",
-      lat: 10.71,
-      lon: 74.01,
-    },
-    {
-      id: 5,
-      area: "Kolkata",
-      title: "Drainage blockage near Salt Lake",
-      reports: 128,
-      severity: "High",
-      time: "2 days ago",
-      lat: -30.71,
-      lon: -84.01,
-    },
-    {
-      id: 6,
-      area: "Chennai",
-      title: "Frequent power cuts in T Nagar",
-      reports: 115,
-      severity: "Medium",
-      time: "2 days ago",
-      lat: -30.71,
-      lon: 184.01,
-    },
-    {
-      id: 7,
-      area: "Pune",
-      title: "Illegal parking on main roads",
-      reports: 98,
-      severity: "Low",
-      time: "3 days ago",
-      lat: 18.52,
-      lon: 73.85,
-    },
-    {
-      id: 8,
-      area: "Ahmedabad",
-      title: "Mosquito menace in residential areas",
-      reports: 87,
-      severity: "Medium",
-      time: "3 days ago",
-      lat: 23.02,
-      lon: 72.57,
-    },
-    {
-      id: 9,
-      area: "Jaipur",
-      title: "Water logging during rains",
-      reports: 76,
-      severity: "High",
-      time: "4 days ago",
-      lat: 26.91,
-      lon: 75.79,
-    },
-    {
-      id: 10,
-      area: "Lucknow",
-      title: "Stray animal problem in colonies",
-      reports: 65,
-      severity: "Low",
-      time: "4 days ago",
-      lat: 26.85,
-      lon: 80.95,
-    },
-  ];
+  { id: 1, area: "Mumbai", title: "Water supply issue in Andheri", reports: 245, severity: "High", time: "2 hours ago", lat: 34.05, lon: -218.24 },
+  { id: 2, area: "Delhi", title: "Street lights not functioning in Connaught Place", reports: 189, severity: "Medium", time: "5 hours ago", lat: 32.78, lon: -96.8 },
+  { id: 3, area: "Bengaluru", title: "Garbage collection delays in Whitefield", reports: 167, severity: "High", time: "1 day ago", lat: 40.71, lon: 374.01 },
+  { id: 4, area: "Hyderabad", title: "Potholes causing traffic jams in Hitech City", reports: 142, severity: "Medium", time: "1 day ago", lat: 10.71, lon: 74.01 },
+  { id: 5, area: "Kolkata", title: "Drainage blockage near Salt Lake", reports: 128, severity: "High", time: "2 days ago", lat: -30.71, lon: -84.01 },
+  { id: 6, area: "Chennai", title: "Frequent power cuts in T Nagar", reports: 115, severity: "Medium", time: "2 days ago", lat: -30.71, lon: 184.01 },
+  { id: 7, area: "Pune", title: "Illegal parking on main roads", reports: 98, severity: "Low", time: "3 days ago", lat: 18.52, lon: 73.85 },
+  { id: 8, area: "Ahmedabad", title: "Mosquito menace in residential areas", reports: 87, severity: "Medium", time: "3 days ago", lat: 23.02, lon: 72.57 },
+  { id: 9, area: "Jaipur", title: "Water logging during rains", reports: 76, severity: "High", time: "4 days ago", lat: 26.91, lon: 75.79 },
+  { id: 10, area: "Lucknow", title: "Stray animal problem in colonies", reports: 65, severity: "Low", time: "4 days ago", lat: 26.85, lon: 80.95 }
+];
 
-  // Department Performance Data
-  const departmentPerformanceData = [
-    {
-      department: "Water Department",
-      resolved: 85,
-      pending: 15,
-      avgTime: "2.3 days",
-    },
-    {
-      department: "Electricity Board",
-      resolved: 72,
-      pending: 28,
-      avgTime: "3.1 days",
-    },
-    {
-      department: "Municipal Corp",
-      resolved: 68,
-      pending: 32,
-      avgTime: "4.2 days",
-    },
-    {
-      department: "Public Works",
-      resolved: 91,
-      pending: 9,
-      avgTime: "1.8 days",
-    },
-    {
-      department: "Sanitation",
-      resolved: 78,
-      pending: 22,
-      avgTime: "2.7 days",
-    },
-    {
-      department: "Traffic Police",
-      resolved: 64,
-      pending: 36,
-      avgTime: "5.5 days",
-    },
-  ];
-
-  // Reports/Resolutions Over Time Data
+const departmentPerformanceData = [
+  { department: "Water Department", resolved: 85, pending: 15, avgTime: "2.3 days" },
+  { department: "Electricity Board", resolved: 72, pending: 28, avgTime: "3.1 days" },
+  { department: "Municipal Corp", resolved: 68, pending: 32, avgTime: "4.2 days" },
+  { department: "Public Works", resolved: 91, pending: 9, avgTime: "1.8 days" },
+  { department: "Sanitation", resolved: 78, pending: 22, avgTime: "2.7 days" },
+  { department: "Traffic Police", resolved: 64, pending: 36, avgTime: "5.5 days" }
+];
   const reportsOverTimeData = [
     { month: "Jan", reports: 45, resolved: 32 },
     { month: "Feb", reports: 52, resolved: 38 },
@@ -214,8 +91,6 @@ export default function UserPage() {
     { month: "Nov", reports: 76, resolved: 64 },
     { month: "Dec", reports: 63, resolved: 54 },
   ];
-
-  // Sort complaints by severity: High -> Medium -> Low
   const sortedComplaints = useMemo(() => {
     const severityOrder = { High: 0, Medium: 1, Low: 2 };
     return [...trendingComplaints].sort((a, b) => {
@@ -322,39 +197,51 @@ export default function UserPage() {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-gray-900/70 backdrop-blur-md p-4 rounded-2xl border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-          <p className="font-bold text-white text-sm mb-3 border-b border-white/10 pb-2">
+        <div className="bg-white/10 p-4 rounded-2xl border border-white/20 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+          <p className="font-bold text-white text-sm mb-4 border-b border-white/10 pb-2 text-shadow-sm">
             {label}
           </p>
-          <div className="space-y-3">
+          <div className="space-y-5 ounded-xl">
             {/* Resolved */}
             <div className="flex justify-between items-center">
-              <span className="text-green-300 text-sm">Resolved</span>
-              <span className="text-white font-semibold">{data.resolved}%</span>
+              <span className="text-green-300 text-sm text-shadow-sm">
+                Resolved
+              </span>
+              <span className="text-white font-semibold text-shadow-sm">
+                {data.resolved}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-white/20 rounded-full h-2">
               <div
-                className="h-2 rounded-full bg-gradient-to-r from-green-400 to-green-600 shadow-[0_0_10px_rgba(16,185,129,0.6)] transition-all duration-300"
+                className="h-2 rounded-full bg-gradient-to-r from-green-400 to-green-600 shadow-[0_0_20px_rgba(16,185,129,0.7)] transition-all duration-500"
                 style={{ width: `${data.resolved}%` }}
               />
             </div>
 
             {/* Pending */}
-            <div className="flex justify-between items-center">
-              <span className="text-yellow-300 text-sm">Pending</span>
-              <span className="text-white font-semibold">{data.pending}%</span>
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-yellow-300 text-sm text-shadow-sm">
+                Pending
+              </span>
+              <span className="text-white font-semibold text-shadow-sm">
+                {data.pending}%
+              </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-white/20 rounded-full h-2">
               <div
-                className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-300"
+                className="h-2 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-500 shadow-[0_0_20px_rgba(245,158,11,0.6)] transition-all duration-500"
                 style={{ width: `${data.pending}%` }}
               />
             </div>
 
             {/* Avg Time */}
-            <div className="flex justify-between items-center mt-3 pt-2 border-t border-white/10">
-              <span className="text-blue-300 text-sm">Avg. Time</span>
-              <span className="text-white font-semibold">{data.avgTime}</span>
+            <div className="flex justify-between items-center mt-5 pt-3 border-t border-white/10">
+              <span className="text-blue-300 text-sm text-shadow-sm">
+                Avg. Time
+              </span>
+              <span className="text-white font-semibold text-shadow-sm">
+                {data.avgTime}
+              </span>
             </div>
           </div>
         </div>
@@ -367,13 +254,22 @@ export default function UserPage() {
   const CustomLineTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-gray-800/95 backdrop-blur-sm p-3 rounded-lg border border-white/20 shadow-lg">
-          <p className="font-bold text-white">{label}</p>
-          <p className="text-blue-400">Reports: {payload[0].value}</p>
-          <p className="text-green-400">Resolved: {payload[1].value}</p>
-          <p className="text-gray-400">
+        <div className="bg-white/5 backdrop-blur-lg border border-white/20 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] p-4 flex flex-col space-y-2">
+          <p className="text-white font-bold text-sm text-shadow-md">{label}</p>
+          <p className="text-blue-400 text-sm text-shadow-sm">
+            Reports: {payload[0].value}
+          </p>
+          <p className="text-green-400 text-sm text-shadow-sm">
+            Resolved: {payload[1].value}
+          </p>
+          <p className="text-gray-300 text-sm">
             Resolution Rate:{" "}
-            {Math.round((payload[1].value / payload[0].value) * 100)}%
+            <span className="font-semibold text-white text-shadow-sm">
+              {payload[0].value
+                ? Math.round((payload[1].value / payload[0].value) * 100)
+                : 0}
+              %
+            </span>
           </p>
         </div>
       );
@@ -399,17 +295,13 @@ export default function UserPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background matching the login page exactly */}
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
         ></div>
-        {/* Exact same glassmorphism overlay as login page */}
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       </div>
-
-      {/* Header at the very top - matching the provided design */}
       <motion.header
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
           isScrolled
@@ -621,7 +513,26 @@ export default function UserPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-6xl mx-auto mt-16 gap-6 px-4">
+        {/* Welcome Text */}
+        <motion.div
+          className={`flex-1 text-left transition-all duration-700 delay-400 ease-out ${
+            isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+          }`}
+        >
+          <h1 className="text-4xl font-bold text-white mb-2">
+            Welcome, {user.name} 🎉
+          </h1>
+          <p className="text-white/70 text-lg">
+            Press and drag to blow the wind .The lion will surely appreciate.
+          </p>
+        </motion.div>
 
+        {/* Lion Component */}
+        <div className="flex-1 w-full h-96 md:h-80">
+          <LionComponent />
+        </div>
+      </div>
       {/* Main Content Area - Globe on left, Trending complaints on right */}
       <div className="flex-1 flex flex-col lg:flex-row mt-20 p-4 relative z-10 gap-6">
         {/* Left Section - Globe */}
@@ -893,19 +804,6 @@ export default function UserPage() {
       {/* Three Interactive Cards Section */}
       <div className="flex-1 flex items-center justify-center p-4 relative z-10 mt-8">
         <div className="w-full max-w-6xl">
-          {/* Welcome Message */}
-          <motion.div
-            className={`text-center mb-10 transition-all duration-700 delay-400 ease-out ${
-              isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-            }`}
-          >
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Welcome, {user.name} 🎉
-            </h1>
-            <p className="text-white/70 text-lg">
-              We're glad to have you back.
-            </p>
-          </motion.div>
 
           {/* Three Interactive Cards */}
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 px-4">
