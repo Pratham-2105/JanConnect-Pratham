@@ -283,7 +283,7 @@ const departmentPerformanceData = [
         <div className="absolute inset-0 z-0">
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-            style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
+            style={{ backgroundImage: "url('/images/userloginbg6.jpg')" }}
           ></div>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
         </div>
@@ -298,139 +298,140 @@ const departmentPerformanceData = [
       <div className="absolute inset-0 z-0">
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
+          style={{ backgroundImage: "url('/images/userloginbg6.jpg')" }}
         ></div>
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       </div>
-      <motion.header
-        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
-          isScrolled
-            ? "bg-white/20 backdrop-blur-lg shadow-sm"
-            : "bg-white/10 backdrop-blur-md"
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 20, stiffness: 300 }}
-      >
-        <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
-          {/* Site Name */}
-          <motion.div
-            className="text-xl md:text-2xl font-bold text-gray-800"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          >
-            JanConnect
-          </motion.div>
+      {/* Header at the very top - matching the provided design */}
+<motion.header
+  className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+    isScrolled
+      ? "backdrop-blur-lg shadow-sm"
+      : "backdrop-blur-md"
+  }`}
+  initial={{ y: -100 }}
+  animate={{ y: 0 }}
+  transition={{ type: "spring", damping: 20, stiffness: 300 }}
+>
+  <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+    {/* Site Name */}
+    <motion.div
+      className="text-xl md:text-2xl font-bold text-white"
+      whileHover={{ scale: 1.05 }}
+      transition={{ type: "spring", stiffness: 400, damping: 10 }}
+    >
+      JanConnect
+    </motion.div>
 
-          {/* Desktop Navigation Items */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* State Dropdown */}
-            <div className="relative">
-              <select
-                value={selectedState}
-                onChange={(e) => {
-                  setSelectedState(e.target.value);
-                  setSelectedAuthority("");
-                }}
-                className="p-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-gray-800 focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm"
-              >
-                <option value="" className="bg-gray-800/90 text-white">
-                  Select Your State
+    {/* Desktop Navigation Items */}
+    <div className="hidden md:flex items-center space-x-4">
+      {/* State Dropdown */}
+      <div className="relative">
+        <select
+          value={selectedState}
+          onChange={(e) => {
+            setSelectedState(e.target.value);
+            setSelectedAuthority("");
+          }}
+          className="p-2 bg-white-900/70 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm"
+        >
+          <option value="" className="bg-white-800/90 text-white">
+            Select Your State
+          </option>
+          {states.map((state) => (
+            <option
+              key={state}
+              value={state}
+              className="bg-white-800/90 text-white"
+            >
+              {state}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Authority Dropdown */}
+      <div className="relative">
+        <select
+          value={selectedAuthority}
+          onChange={(e) => setSelectedAuthority(e.target.value)}
+          disabled={!selectedState}
+          className="p-2 bg-white-900/70 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <option value="" className="bg-white-800/90 text-white">
+            Select Your Authority
+          </option>
+          {selectedState &&
+            authorities[selectedState.replace(/\s+/g, "")]?.map(
+              (auth) => (
+                <option
+                  key={auth}
+                  value={auth}
+                  className="bg-white-800/90 text-white"
+                >
+                  {auth}
                 </option>
-                {states.map((state) => (
-                  <option
-                    key={state}
-                    value={state}
-                    className="bg-gray-800/90 text-white"
-                  >
-                    {state}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Authority Dropdown */}
-            <div className="relative">
-              <select
-                value={selectedAuthority}
-                onChange={(e) => setSelectedAuthority(e.target.value)}
-                disabled={!selectedState}
-                className="p-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-gray-800 focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="" className="bg-gray-800/90 text-white">
-                  Select Your Authority
-                </option>
-                {selectedState &&
-                  authorities[selectedState.replace(/\s+/g, "")]?.map(
-                    (auth) => (
-                      <option
-                        key={auth}
-                        value={auth}
-                        className="bg-gray-800/90 text-white"
-                      >
-                        {auth}
-                      </option>
-                    )
-                  )}
-              </select>
-            </div>
-
-            {/* Profile Section */}
-            <div className="relative">
-              <motion.button
-                onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 p-2 pl-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md border border-white/20 backdrop-blur-sm"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="text-gray-800">Welcome, {user.name}</span>
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-              </motion.button>
-
-              {/* Profile Dropdown */}
-              <AnimatePresence>
-                {showProfileDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-56 bg-gray-800/90 backdrop-blur-xl rounded-xl shadow-lg z-20 overflow-hidden border border-white/20"
-                  >
-                    <div className="p-4 border-b border-white/10">
-                      <p className="text-white font-medium">{user.name}</p>
-                      <p className="text-white/60 text-sm">{user.email}</p>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left p-4 text-white/90 hover:bg-red-500/20 transition-all duration-150 flex items-center"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <motion.button
-            className="md:hidden p-2 rounded-xl bg-white/0 hover:bg-white/10 transition-colors duration-300"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            whileTap={{ scale: 0.9 }}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6 text-gray-800" />
-            ) : (
-              <Menu className="h-6 w-6 text-gray-800" />
+              )
             )}
-          </motion.button>
-        </div>
-      </motion.header>
+        </select>
+      </div>
+
+      {/* Profile Section */}
+      <div className="relative">
+        <motion.button
+          onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+          className="flex items-center space-x-2 bg-white-900/70 hover:bg-white-800/70 p-2 pl-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md border border-white/20 backdrop-blur-sm"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <span className="text-white">Welcome, {user.name}</span>
+          <div className="w-8 h-8 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+        </motion.button>
+
+        {/* Profile Dropdown */}
+        <AnimatePresence>
+          {showProfileDropdown && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-2 w-56 bg-white-900/95 backdrop-blur-xl rounded-xl shadow-lg z-20 overflow-hidden border border-white/20"
+            >
+              <div className="p-4 border-b border-white/10">
+                <p className="text-white font-medium">{user.name}</p>
+                <p className="text-white/60 text-sm">{user.email}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left p-4 text-white/90 hover:bg-red-500/20 transition-all duration-150 flex items-center"
+              >
+                <i className="fas fa-sign-out-alt mr-2"></i>
+                Logout
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+
+    {/* Mobile Menu Button */}
+    <motion.button
+      className="md:hidden p-2 rounded-xl bg-white/0 hover:bg-white/10 transition-colors duration-300"
+      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      whileTap={{ scale: 0.9 }}
+      aria-label="Toggle menu"
+    >
+      {mobileMenuOpen ? (
+        <i className="fas fa-times h-6 w-6 text-white"></i>
+      ) : (
+        <i className="fas fa-bars h-6 w-6 text-white"></i>
+      )}
+    </motion.button>
+  </div>
+</motion.header>
 
       {/* Mobile Menu */}
       <AnimatePresence>
@@ -453,14 +454,14 @@ const departmentPerformanceData = [
                   }}
                   className="w-full p-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-gray-800 focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm"
                 >
-                  <option value="" className="bg-gray-800/90 text-white">
+                  <option value="" className="bg-white-800/90 text-white">
                     Select Your State
                   </option>
                   {states.map((state) => (
                     <option
                       key={state}
                       value={state}
-                      className="bg-gray-800/90 text-white"
+                      className="bg-white-800/90 text-white"
                     >
                       {state}
                     </option>
@@ -476,7 +477,7 @@ const departmentPerformanceData = [
                   disabled={!selectedState}
                   className="w-full p-2 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-gray-800 focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="" className="bg-gray-800/90 text-white">
+                  <option value="" className="bg-white-800/90 text-white">
                     Select Your Authority
                   </option>
                   {selectedState &&
@@ -485,7 +486,7 @@ const departmentPerformanceData = [
                         <option
                           key={auth}
                           value={auth}
-                          className="bg-gray-800/90 text-white"
+                          className="bg-white-800/90 text-white"
                         >
                           {auth}
                         </option>
@@ -496,8 +497,8 @@ const departmentPerformanceData = [
 
               {/* Profile Info in Mobile Menu */}
               <div className="p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20">
-                <p className="text-gray-800 font-medium">{user.name}</p>
-                <p className="text-gray-800/60 text-sm">{user.email}</p>
+                <p className="text-white-800 font-medium">{user.name}</p>
+                <p className="text-white-800/60 text-sm">{user.email}</p>
               </div>
 
               {/* Logout Button in Mobile Menu */}
