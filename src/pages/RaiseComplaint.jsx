@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Camera, MapPin, AlertCircle } from "lucide-react";
+import { ArrowLeft, Camera, MapPin, AlertCircle, Upload, X, Navigation } from "lucide-react";
+import Autocomplete from "react-google-autocomplete";
+import { createReport } from '../api/report';
 
 export default function RaiseComplaint() {
   const navigate = useNavigate();
@@ -10,40 +12,289 @@ export default function RaiseComplaint() {
     title: "",
     category: "",
     description: "",
-    location: "",
-    urgency: "medium"
+    location: {
+      address: "",
+      coordinates: [0, 0],
+      placeId: null,
+      city: "",
+      state: "",
+      country: ""
+    },
+    urgency: "medium",
+    media: null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [error, setError] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  // Google Maps API Key - Replace with your actual key
+  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === "address") {
+      setFormData(prev => ({
+        ...prev,
+        location: { ...prev.location, address: value }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  // Handle Google Places Autocomplete selection
+  const handlePlaceSelected = (place) => {
+    console.log('Selected place:', place);
+    
+    if (place.geometry && place.geometry.location) {
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
+      
+      // Extract address components
+      let city = "", state = "", country = "";
+      
+      if (place.address_components) {
+        place.address_components.forEach(component => {
+          const types = component.types;
+          
+          if (types.includes('locality')) {
+            city = component.long_name;
+          } else if (types.includes('administrative_area_level_1')) {
+            state = component.long_name;
+          } else if (types.includes('country')) {
+            country = component.long_name;
+          }
+        });
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        location: {
+          address: place.formatted_address || place.name,
+          coordinates: [lng, lat], // longitude, latitude format for backend
+          placeId: place.place_id,
+          city,
+          state,
+          country
+        }
+      }));
+
+      setError("");
+      console.log('Location updated:', { lat, lng, address: place.formatted_address });
+    }
+  };
+
+  // Get current location using geolocation API
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation is not supported by this browser");
+      return;
+    }
+
+    setIsGettingLocation(true);
+    setError("");
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        try {
+          // Reverse geocode to get address
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`
+          );
+          
+          const data = await response.json();
+          
+          if (data.results && data.results.length > 0) {
+            const result = data.results[0];
+            
+            // Extract address components
+            let city = "", state = "", country = "";
+            
+            result.address_components.forEach(component => {
+              const types = component.types;
+              
+              if (types.includes('locality')) {
+                city = component.long_name;
+              } else if (types.includes('administrative_area_level_1')) {
+                state = component.long_name;
+              } else if (types.includes('country')) {
+                country = component.long_name;
+              }
+            });
+
+            setFormData(prev => ({
+              ...prev,
+              location: {
+                address: result.formatted_address,
+                coordinates: [longitude, latitude],
+                placeId: result.place_id,
+                city,
+                state,
+                country
+              }
+            }));
+
+            console.log('Current location captured:', {
+              address: result.formatted_address,
+              coordinates: [longitude, latitude]
+            });
+          } else {
+            throw new Error('No address found for current location');
+          }
+        } catch (error) {
+          console.error('Reverse geocoding error:', error);
+          
+          // Even if reverse geocoding fails, we still have coordinates
+          setFormData(prev => ({
+            ...prev,
+            location: {
+              ...prev.location,
+              address: `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+              coordinates: [longitude, latitude]
+            }
+          }));
+        }
+        
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setIsGettingLocation(false);
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setError("Location access denied by user");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setError("Location information is unavailable");
+            break;
+          case error.TIMEOUT:
+            setError("Location request timed out");
+            break;
+          default:
+            setError("An unknown error occurred while retrieving location");
+            break;
+        }
+      },
+      options
+    );
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (50MB max)
+      if (file.size > 50 * 1024 * 1024) {
+        setError("File size must be less than 50MB");
+        return;
+      }
+
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
+      if (!validTypes.includes(file.type)) {
+        setError("Only images (JPEG, PNG, WebP) and videos (MP4, WebM) are allowed");
+        return;
+      }
+
+      setFormData(prev => ({ ...prev, media: file }));
+      setError("");
+
+      // Create preview URL
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const removeFile = () => {
+    setFormData(prev => ({ ...prev, media: null }));
+    setPreviewUrl("");
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Complaint submitted:", formData);
+    setError("");
+
+    // Validate location
+    if (!formData.location.address || (formData.location.coordinates[0] === 0 && formData.location.coordinates[1] === 0)) {
+      setError("Please select a valid location or use current location");
       setIsSubmitting(false);
-      // Here you would typically navigate to a success page or show a success message
-    }, 2000);
+      return;
+    }
+
+    try {
+      // Prepare FormData for multipart/form-data submission
+      const submitFormData = new FormData();
+      
+      // Add required fields
+      submitFormData.append('title', formData.title);
+      submitFormData.append('category', formData.category);
+      submitFormData.append('description', formData.description);
+      submitFormData.append('urgency', formData.urgency);
+      
+      // Add location data
+      submitFormData.append('location[address]', formData.location.address);
+      submitFormData.append('location[coordinates]', JSON.stringify(formData.location.coordinates));
+      
+      // Add media file if present
+      if (formData.media) {
+        submitFormData.append('media', formData.media);
+      }
+
+      console.log('Submitting report with location:', formData.location);
+
+      // Call backend API
+      const response = await createReport(submitFormData);
+      
+      console.log('Report created successfully:', response.data);
+      
+      // Show success and navigate
+      const reportId = response.data.data.report.reportId;
+      const municipality = response.data.data.autoSelected?.municipality;
+      
+      alert(`Report submitted successfully!\nReport ID: ${reportId}\nAssigned to: ${municipality || 'Municipal Authority'}`);
+      navigate(`/user/${userId}`);
+
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      
+      // Handle different types of errors
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.response?.status === 401) {
+        setError("Please login again to submit reports");
+        navigate('/login');
+      } else {
+        setError("Failed to submit report. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background matching the login page exactly */}
+      {/* Background */}
       <div className="absolute inset-0 z-0">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
         ></div>
-        {/* Exact same glassmorphism overlay as login page */}
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       </div>
 
@@ -74,7 +325,7 @@ export default function RaiseComplaint() {
             Raise a Complaint
           </motion.div>
           
-          <div className="w-10"></div> {/* Spacer for balance */}
+          <div className="w-10"></div>
         </div>
       </motion.header>
 
@@ -93,9 +344,21 @@ export default function RaiseComplaint() {
             <h1 className="text-2xl md:text-3xl font-bold text-white">Report an Issue</h1>
           </div>
 
+          {/* Error Display */}
+          {error && (
+            <motion.div 
+              className="mb-4 p-3 bg-red-500/20 border border-red-400 rounded-xl text-red-200 text-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {error}
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title */}
             <div>
-              <label className="block text-white/80 text-sm font-medium mb-2">Complaint Title</label>
+              <label className="block text-white/80 text-sm font-medium mb-2">Complaint Title *</label>
               <input
                 type="text"
                 name="title"
@@ -107,8 +370,9 @@ export default function RaiseComplaint() {
               />
             </div>
 
+            {/* Category */}
             <div>
-              <label className="block text-white/80 text-sm font-medium mb-2">Category</label>
+              <label className="block text-white/80 text-sm font-medium mb-2">Category *</label>
               <select
                 name="category"
                 value={formData.category}
@@ -117,16 +381,19 @@ export default function RaiseComplaint() {
                 className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200"
               >
                 <option value="">Select a category</option>
-                <option value="infrastructure">Infrastructure</option>
-                <option value="sanitation">Sanitation</option>
-                <option value="safety">Public Safety</option>
-                <option value="noise">Noise Pollution</option>
-                <option value="other">Other</option>
+                <option value="Infrastructure">Infrastructure</option>
+                <option value="Sanitation">Sanitation</option>
+                <option value="Street Lighting">Street Lighting</option>
+                <option value="Water Supply">Water Supply</option>
+                <option value="Traffic">Traffic</option>
+                <option value="Parks">Parks</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 
+            {/* Description */}
             <div>
-              <label className="block text-white/80 text-sm font-medium mb-2">Description</label>
+              <label className="block text-white/80 text-sm font-medium mb-2">Description *</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -138,22 +405,72 @@ export default function RaiseComplaint() {
               />
             </div>
 
+            {/* Location with Google Autocomplete */}
             <div>
-              <label className="block text-white/80 text-sm font-medium mb-2">Location</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60"
-                  placeholder="Enter the location of the issue"
-                />
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
+              <label className="block text-white/80 text-sm font-medium mb-2">Location * 
+                <span className="text-white/60 text-xs ml-2">(Search or select current location)</span>
+              </label>
+              
+              <div className="space-y-3">
+                {/* Google Places Autocomplete */}
+                <div className="relative">
+                  <Autocomplete
+                    apiKey={GOOGLE_MAPS_API_KEY}
+                    onPlaceSelected={handlePlaceSelected}
+                    value={formData.location.address}
+                    onChange={(e) => handleInputChange({ target: { name: 'address', value: e.target.value } })}
+                    options={{
+                      types: [],
+                      componentRestrictions: { country: "in" }, // Restrict to India
+                      fields: ["address_components", "geometry", "formatted_address", "place_id", "name"]
+                    }}
+                    className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60"
+                    placeholder="Type to search location (e.g., Park Street, Ranchi)"
+                    required
+                  />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
+                </div>
+                
+                {/* Current Location Button */}
+                <motion.button
+                  type="button"
+                  onClick={getCurrentLocation}
+                  disabled={isGettingLocation}
+                  className="w-full py-2 text-sm bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-xl text-white/80 hover:bg-gradient-to-r hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isGettingLocation ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Getting location...
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="mr-2 h-4 w-4" />
+                      📍 Use Current Location
+                    </>
+                  )}
+                </motion.button>
+
+                {/* Location Info Display */}
+                {formData.location.coordinates[0] !== 0 && formData.location.coordinates[1] !== 0 && (
+                  <div className="p-3 bg-green-500/10 border border-green-400/30 rounded-xl">
+                    <p className="text-green-200 text-sm">
+                      ✅ Location captured: {formData.location.city && `${formData.location.city}, `}{formData.location.state}
+                    </p>
+                    <p className="text-green-200/70 text-xs">
+                      Coordinates: {formData.location.coordinates[1].toFixed(6)}, {formData.location.coordinates[0].toFixed(6)}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Urgency Level */}
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">Urgency Level</label>
               <div className="grid grid-cols-3 gap-3">
@@ -178,20 +495,49 @@ export default function RaiseComplaint() {
               </div>
             </div>
 
+            {/* File Upload */}
             <div>
-              <label className="block text-white/80 text-sm font-medium mb-2">Add Photos (Optional)</label>
-              <div className="flex items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl bg-white/5 hover:bg-white/10 transition-colors duration-200 cursor-pointer">
-                <div className="text-center">
-                  <Camera className="h-8 w-8 text-white/60 mx-auto mb-2" />
-                  <p className="text-white/60 text-sm">Click to upload or drag and drop</p>
+              <label className="block text-white/80 text-sm font-medium mb-2">Add Photo/Video (Optional)</label>
+              
+              {/* File Preview */}
+              {previewUrl && (
+                <div className="mb-3 relative">
+                  {formData.media?.type.startsWith('image/') ? (
+                    <img src={previewUrl} alt="Preview" className="w-full h-32 object-cover rounded-xl" />
+                  ) : (
+                    <video src={previewUrl} className="w-full h-32 object-cover rounded-xl" controls />
+                  )}
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    className="absolute top-2 right-2 p-1 bg-red-500/70 rounded-full hover:bg-red-500/90"
+                  >
+                    <X className="h-4 w-4 text-white" />
+                  </button>
+                  <p className="text-white/60 text-xs mt-1">{formData.media?.name}</p>
                 </div>
-                <input type="file" className="hidden" multiple accept="image/*" />
-              </div>
+              )}
+              
+              {/* File Upload Area */}
+              <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-white/20 rounded-xl bg-white/5 hover:bg-white/10 transition-colors duration-200 cursor-pointer">
+                <div className="text-center">
+                  <Upload className="h-8 w-8 text-white/60 mx-auto mb-2" />
+                  <p className="text-white/60 text-sm">Click to upload image or video</p>
+                  <p className="text-white/40 text-xs">Max 50MB • JPEG, PNG, WebP, MP4, WebM</p>
+                </div>
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/webm" 
+                  onChange={handleFileChange}
+                />
+              </label>
             </div>
 
+            {/* Submit Button */}
             <motion.button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isGettingLocation}
               className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-70"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
