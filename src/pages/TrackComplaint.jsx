@@ -18,6 +18,7 @@ export default function TrackComplaint() {
   const [error, setError] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedComplaint, setSelectedComplaint] = useState(null); // For inline details
+  const [detailModalOpen, setDetailModalOpen] = useState(false); // For detailed modal view
 
   useEffect(() => {
     const fetchUserComplaints = async () => {
@@ -145,20 +146,25 @@ export default function TrackComplaint() {
     setSelectedComplaint(selectedComplaint?.reportId === complaint.reportId ? null : complaint);
   };
 
+  const openDetailModal = (complaint) => {
+    setSelectedComplaint(complaint);
+    setDetailModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/userpagebg.jpg')" }}
+          style={{ backgroundImage: "url('/images/userloginbg6.jpg')" }}
         />
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       </div>
 
       {/* Header */}
       <motion.header 
-        className="fixed top-0 left-0 w-full z-50 bg-white/10 backdrop-blur-md"
+        className="fixed top-0 left-0 w-full z-50  backdrop-blur-md"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
@@ -166,7 +172,7 @@ export default function TrackComplaint() {
         <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
           <motion.button 
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-800 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/20"
+            className="flex items-center text-white p-2 rounded-xl hover:bg-white/20 transition-all duration-200 backdrop-blur-sm "
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -175,7 +181,7 @@ export default function TrackComplaint() {
           </motion.button>
           
           <motion.div 
-            className="text-xl md:text-2xl font-bold text-gray-800"
+            className="text-xl md:text-2xl font-bold text-white"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
@@ -389,7 +395,7 @@ export default function TrackComplaint() {
                                     {/* Timeline */}
                                     {complaint.updates && complaint.updates.length > 0 && (
                                       <div>
-                                        <h4 className="text-sm font-medium text-white/80 mb-3">Updates Timeline</h4>
+                                        <h4 className="text-sm font-medium text-white/80 mb-3">Progress Timeline</h4>
                                         <div className="space-y-3 max-h-48 overflow-y-auto">
                                           {complaint.updates.map((update, updateIndex) => (
                                             <div key={updateIndex} className="flex gap-3">
@@ -427,6 +433,16 @@ export default function TrackComplaint() {
                                       </div>
                                     )}
                                   </div>
+                                </div>
+                                
+                                {/* View Full Details Button */}
+                                <div className="mt-6 pt-6 border-t border-white/20">
+                                  <button
+                                    onClick={() => openDetailModal(complaint)}
+                                    className="w-full py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors duration-200"
+                                  >
+                                    View Full Details
+                                  </button>
                                 </div>
                               </div>
                             </motion.div>
@@ -475,6 +491,114 @@ export default function TrackComplaint() {
           )}
         </motion.div>
       </div>
+
+      {/* Complaint Detail Modal */}
+      <AnimatePresence>
+        {detailModalOpen && selectedComplaint && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-6 md:p-8 border border-white/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-white">{selectedComplaint.title}</h2>
+                <button 
+                  onClick={() => setDetailModalOpen(false)}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="flex items-center text-white/80">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  <span>Reported: {formatDetailDate(selectedComplaint.createdAt || selectedComplaint.date)}</span>
+                </div>
+                {selectedComplaint.status === "resolved" && (
+                  <div className="flex items-center text-white/80">
+                    <CheckCircle className="h-5 w-5 mr-2 text-green-400" />
+                    <span>Resolved: {formatDetailDate(selectedComplaint.resolvedDate || selectedComplaint.updatedAt)}</span>
+                  </div>
+                )}
+                <div className="flex items-center text-white/80">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  <span>{selectedComplaint.location?.address || 'Location not specified'}</span>
+                </div>
+                <div className="flex items-center text-white/80">
+                  <span>Category: {selectedComplaint.category}</span>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                <p className="text-white/80">{selectedComplaint.description}</p>
+              </div>
+              
+              {/* Progress Timeline */}
+              {selectedComplaint.updates && selectedComplaint.updates.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Progress Timeline</h3>
+                  <div className="space-y-4">
+                    {selectedComplaint.updates.map((update, index) => (
+                      <div key={index} className="flex">
+                        <div className="flex flex-col items-center mr-4">
+                          <div className="w-3 h-3 bg-indigo-400 rounded-full"></div>
+                          {index < selectedComplaint.updates.length - 1 && (
+                            <div className="w-0.5 h-12 bg-indigo-400/30 mt-1"></div>
+                          )}
+                        </div>
+                        <div className="pb-4">
+                          <p className="text-white font-medium">{update.message}</p>
+                          <p className="text-white/60 text-sm">{formatDetailDate(update.date)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Feedback Section */}
+              {(selectedComplaint.rating || selectedComplaint.feedback) && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-2">Your Feedback</h3>
+                  <div className="flex items-center mb-2">
+                    <div className="flex mr-2">
+                      {renderStars(selectedComplaint.rating || 0)}
+                    </div>
+                    <span className="text-white/80">{selectedComplaint.rating || 0}/5</span>
+                  </div>
+                  {selectedComplaint.feedback && (
+                    <p className="text-white/80 italic">"{selectedComplaint.feedback}"</p>
+                  )}
+                </div>
+              )}
+
+              {/* Municipality & Department Info */}
+              {(selectedComplaint.municipality?.name || selectedComplaint.department?.name) && (
+                <div className="mt-6 pt-6 border-t border-white/20">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {selectedComplaint.municipality?.name && (
+                      <div>
+                        <span className="text-white/60">Municipality: </span>
+                        <span className="text-white">{selectedComplaint.municipality.name}</span>
+                      </div>
+                    )}
+                    {selectedComplaint.department?.name && (
+                      <div>
+                        <span className="text-white/60">Department: </span>
+                        <span className="text-white">{selectedComplaint.department.name}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

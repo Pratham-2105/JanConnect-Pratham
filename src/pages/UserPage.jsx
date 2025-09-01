@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import {LogOut,Menu,X,AlertCircle,Search,CheckCircle,ChevronDown,ChevronUp,MapPin,Users,Clock,ArrowRight,BarChart3,TrendingUp,} from "lucide-react";
+import {LogOut,Menu,X,AlertCircle,Search,CheckCircle,ChevronDown,ChevronUp,MapPin,Users,Clock,ArrowRight,BarChart3,TrendingUp,ThumbsUp,Calendar,Building,User,Star,} from "lucide-react";
 import { Globe3D } from "../components/Globe3D";
 import LionComponent from "../pages/LionComponent";
 import {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,LineChart,Line,Legend,} from "recharts";
@@ -29,27 +29,31 @@ export default function UserPage() {
     Illinois: ["Chicago Police", "Springfield PD", "Peoria Sheriff"],
   };
 
-  const trendingComplaints = [
-  { id: 1, area: "Mumbai", title: "Water supply issue in Andheri", reports: 245, severity: "High", time: "2 hours ago", lat: 34.05, lon: -218.24 },
-  { id: 2, area: "Delhi", title: "Street lights not functioning in Connaught Place", reports: 189, severity: "Medium", time: "5 hours ago", lat: 32.78, lon: -96.8 },
-  { id: 3, area: "Bengaluru", title: "Garbage collection delays in Whitefield", reports: 167, severity: "High", time: "1 day ago", lat: 40.71, lon: 374.01 },
-  { id: 4, area: "Hyderabad", title: "Potholes causing traffic jams in Hitech City", reports: 142, severity: "Medium", time: "1 day ago", lat: 10.71, lon: 74.01 },
-  { id: 5, area: "Kolkata", title: "Drainage blockage near Salt Lake", reports: 128, severity: "High", time: "2 days ago", lat: -30.71, lon: -84.01 },
-  { id: 6, area: "Chennai", title: "Frequent power cuts in T Nagar", reports: 115, severity: "Medium", time: "2 days ago", lat: -30.71, lon: 184.01 },
-  { id: 7, area: "Pune", title: "Illegal parking on main roads", reports: 98, severity: "Low", time: "3 days ago", lat: 18.52, lon: 73.85 },
-  { id: 8, area: "Ahmedabad", title: "Mosquito menace in residential areas", reports: 87, severity: "Medium", time: "3 days ago", lat: 23.02, lon: 72.57 },
-  { id: 9, area: "Jaipur", title: "Water logging during rains", reports: 76, severity: "High", time: "4 days ago", lat: 26.91, lon: 75.79 },
-  { id: 10, area: "Lucknow", title: "Stray animal problem in colonies", reports: 65, severity: "Low", time: "4 days ago", lat: 26.85, lon: 80.95 }
-];
+  const [trendingComplaints, setTrendingComplaints] = useState([
+    { id: 1, area: "Mumbai", title: "Water supply issue in Andheri", reports: 245, severity: "High", time: "2 hours ago", lat: 34.05, lon: -218.24, upvotes: 42, description: "Residents in Andheri West have been facing severe water shortage for the past week. The water supply is irregular and the pressure is very low, affecting daily activities.", category: "Water Supply", createdAt: "2023-10-15T08:30:00Z", updates: [{ message: "Complaint registered and assigned to water department", date: "2023-10-15T09:15:00Z" }, { message: "Team dispatched to investigate the issue", date: "2023-10-15T14:20:00Z" }] },
+    { id: 2, area: "Delhi", title: "Street lights not functioning in Connaught Place", reports: 189, severity: "Medium", time: "5 hours ago", lat: 32.78, lon: -96.8, upvotes: 28, description: "Multiple street lights in the inner circle of Connaught Place are not working, creating safety concerns for pedestrians and motorists during night time.", category: "Street Lights", createdAt: "2023-10-15T05:45:00Z", updates: [{ message: "Complaint registered with electrical department", date: "2023-10-15T06:30:00Z" }] },
+    { id: 3, area: "Bengaluru", title: "Garbage collection delays in Whitefield", reports: 167, severity: "High", time: "1 day ago", lat: 40.71, lon: 374.01, upvotes: 56, description: "Garbage hasn't been collected for three days in Whitefield area, leading to overflow of bins and unhygienic conditions. The smell is becoming unbearable for residents.", category: "Garbage Collection", createdAt: "2023-10-14T09:20:00Z", updates: [{ message: "Complaint registered with sanitation department", date: "2023-10-14T10:05:00Z" }, { message: "Additional collection vehicles assigned to the area", date: "2023-10-15T08:45:00Z" }] },
+    { id: 4, area: "Hyderabad", title: "Potholes causing traffic jams in Hitech City", reports: 142, severity: "Medium", time: "1 day ago", lat: 10.71, lon: 74.01, upvotes: 31, description: "Multiple large potholes on the main road leading to Hitech City are causing traffic congestion during peak hours. Several vehicles have suffered damage.", category: "Road Maintenance", createdAt: "2023-10-14T11:30:00Z", updates: [{ message: "Complaint registered with public works department", date: "2023-10-14T12:15:00Z" }] },
+    { id: 5, area: "Kolkata", title: "Drainage blockage near Salt Lake", reports: 128, severity: "High", time: "2 days ago", lat: -30.71, lon: -84.01, upvotes: 39, description: "Severe drainage blockage in Sector V of Salt Lake causing water logging even with light rainfall. Mosquito breeding has increased due to stagnant water.", category: "Drainage", createdAt: "2023-10-13T14:20:00Z", updates: [{ message: "Complaint registered with municipal corporation", date: "2023-10-13T15:10:00Z" }, { message: "Cleaning crew dispatched to location", date: "2023-10-14T09:45:00Z" }] },
+    { id: 6, area: "Chennai", title: "Frequent power cuts in T Nagar", reports: 115, severity: "Medium", time: "2 days ago", lat: -30.71, lon: 184.01, upvotes: 22, description: "Residents of T Nagar are experiencing frequent and unscheduled power cuts, sometimes lasting for hours. This is affecting businesses and daily life.", category: "Power Supply", createdAt: "2023-10-13T16:40:00Z", updates: [{ message: "Complaint registered with electricity board", date: "2023-10-13T17:25:00Z" }] },
+    { id: 7, area: "Pune", title: "Illegal parking on main roads", reports: 98, severity: "Low", time: "3 days ago", lat: 18.52, lon: 73.85, upvotes: 15, description: "Vehicles are illegally parked on FC Road, causing traffic congestion and inconvenience to pedestrians. No action has been taken despite multiple complaints.", category: "Traffic Management", createdAt: "2023-10-12T10:15:00Z", updates: [{ message: "Complaint registered with traffic police", date: "2023-10-12T11:00:00Z" }] },
+    { id: 8, area: "Ahmedabad", title: "Mosquito menace in residential areas", reports: 87, severity: "Medium", time: "3 days ago", lat: 23.02, lon: 72.57, upvotes: 19, description: "Increased mosquito population in Satellite area leading to rise in dengue and malaria cases. Residents request fogging and cleaning of stagnant water sources.", category: "Public Health", createdAt: "2023-10-12T13:50:00Z", updates: [{ message: "Complaint registered with health department", date: "2023-10-12T14:35:00Z" }] },
+    { id: 9, area: "Jaipur", title: "Water logging during rains", reports: 76, severity: "High", time: "4 days ago", lat: 26.91, lon: 75.79, upvotes: 34, description: "Even light rainfall causes severe water logging in Malviya Nagar area, making roads impassable and entering homes and shops. Drainage system needs urgent attention.", category: "Drainage", createdAt: "2023-10-11T08:10:00Z", updates: [{ message: "Complaint registered with municipal corporation", date: "2023-10-11T08:55:00Z" }, { message: "Engineers assessing the drainage system", date: "2023-10-12T10:30:00Z" }] },
+    { id: 10, area: "Lucknow", title: "Stray animal problem in colonies", reports: 65, severity: "Low", time: "4 days ago", lat: 26.85, lon: 80.95, upvotes: 12, description: "Increased population of stray dogs in Gomti Nagar area is causing safety concerns, especially for children and elderly. Several incidents of barking and chasing have been reported.", category: "Animal Control", createdAt: "2023-10-11T11:30:00Z", updates: [{ message: "Complaint registered with animal control department", date: "2023-10-11T12:15:00Z" }] }
+  ]);
 
-const departmentPerformanceData = [
-  { department: "Water Department", resolved: 85, pending: 15, avgTime: "2.3 days" },
-  { department: "Electricity Board", resolved: 72, pending: 28, avgTime: "3.1 days" },
-  { department: "Municipal Corp", resolved: 68, pending: 32, avgTime: "4.2 days" },
-  { department: "Public Works", resolved: 91, pending: 9, avgTime: "1.8 days" },
-  { department: "Sanitation", resolved: 78, pending: 22, avgTime: "2.7 days" },
-  { department: "Traffic Police", resolved: 64, pending: 36, avgTime: "5.5 days" }
-];
+  const [upvotedComplaints, setUpvotedComplaints] = useState(new Set());
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  const departmentPerformanceData = [
+    { department: "Water Department", resolved: 85, pending: 15, avgTime: "2.3 days" },
+    { department: "Electricity Board", resolved: 72, pending: 28, avgTime: "3.1 days" },
+    { department: "Municipal Corp", resolved: 68, pending: 32, avgTime: "4.2 days" },
+    { department: "Public Works", resolved: 91, pending: 9, avgTime: "1.8 days" },
+    { department: "Sanitation", resolved: 78, pending: 22, avgTime: "2.7 days" },
+    { department: "Traffic Police", resolved: 64, pending: 36, avgTime: "5.5 days" }
+  ];
   const reportsOverTimeData = [
     { month: "Jan", reports: 45, resolved: 32 },
     { month: "Feb", reports: 52, resolved: 38 },
@@ -64,12 +68,13 @@ const departmentPerformanceData = [
     { month: "Nov", reports: 76, resolved: 64 },
     { month: "Dec", reports: 63, resolved: 54 },
   ];
+  
   const sortedComplaints = useMemo(() => {
     const severityOrder = { High: 0, Medium: 1, Low: 2 };
     return [...trendingComplaints].sort((a, b) => {
       return severityOrder[a.severity] - severityOrder[b.severity];
     });
-  }, []);
+  }, [trendingComplaints]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -164,6 +169,61 @@ const departmentPerformanceData = [
       default:
         return "⚪";
     }
+  };
+
+  const handleUpvote = (complaintId, e) => {
+    e.stopPropagation(); // Prevent triggering the complaint detail modal
+    if (upvotedComplaints.has(complaintId)) {
+      // Already upvoted, remove the upvote
+      setUpvotedComplaints(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(complaintId);
+        return newSet;
+      });
+      
+      setTrendingComplaints(prev => 
+        prev.map(complaint => 
+          complaint.id === complaintId 
+            ? { ...complaint, upvotes: Math.max(0, complaint.upvotes - 1) }
+            : complaint
+        )
+      );
+    } else {
+      // Add upvote
+      setUpvotedComplaints(prev => new Set(prev).add(complaintId));
+      
+      setTrendingComplaints(prev => 
+        prev.map(complaint => 
+          complaint.id === complaintId 
+            ? { ...complaint, upvotes: complaint.upvotes + 1 }
+            : complaint
+        )
+      );
+    }
+  };
+
+  const openComplaintDetail = (complaint) => {
+    setSelectedComplaint(complaint);
+    setDetailModalOpen(true);
+  };
+
+  const formatDetailDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`h-4 w-4 ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-white/30"}`}
+      />
+    ));
   };
 
   const CustomBarTooltip = ({ active, payload, label }) => {
@@ -394,7 +454,7 @@ const departmentPerformanceData = [
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             whileTap={{ scale: 0.9 }}
             aria-label="Toggle menu"
-          >
+            >
             {mobileMenuOpen ? (
               <i className="fas fa-times h-6 w-6 text-white"></i>
             ) : (
@@ -450,7 +510,7 @@ const departmentPerformanceData = [
                 >
                   <option value="" className="bg-white-800/90 text-white">
                     Select Your Authority
-                  </option>
+                    </option>
                   {selectedState &&
                     authorities[selectedState.replace(/\s+/g, "")]?.map(
                       (auth) => (
@@ -676,7 +736,8 @@ const departmentPerformanceData = [
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-300"
+                  className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-300 cursor-pointer"
+                  onClick={() => openComplaintDetail(complaint)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -708,7 +769,23 @@ const departmentPerformanceData = [
                         </div>
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-white/40 ml-2 mt-1" />
+                    <div className="flex flex-col items-center ml-2" onClick={(e) => e.stopPropagation()}>
+                      <motion.button
+                        onClick={(e) => handleUpvote(complaint.id, e)}
+                        className={`p-1 rounded-full ${
+                          upvotedComplaints.has(complaint.id)
+                            ? "bg-blue-500/30 text-blue-300"
+                            : "bg-white/10 text-white/60 hover:bg-white/20"
+                        } transition-all duration-200`}
+                        whileTap={{ scale: 0.9 }}
+                        title="Upvote this complaint"
+                      >
+                        <ThumbsUp className="h-4 w-4" />
+                      </motion.button>
+                      <span className="text-xs text-white/80 mt-1">
+                        {complaint.upvotes}
+                      </span>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -915,6 +992,89 @@ const departmentPerformanceData = [
           </div>
         </div>
       </div>
+
+      {/* Complaint Detail Modal */}
+      <AnimatePresence>
+        {detailModalOpen && selectedComplaint && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div 
+              className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-6 md:p-8 border border-white/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+            >
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold text-white">{selectedComplaint.title}</h2>
+                <button 
+                  onClick={() => setDetailModalOpen(false)}
+                  className="text-white/60 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="flex items-center text-white/80">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  <span>Reported: {formatDetailDate(selectedComplaint.createdAt)}</span>
+                </div>
+                <div className="flex items-center text-white/80">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  <span>{selectedComplaint.area}</span>
+                </div>
+                <div className="flex items-center text-white/80">
+                  <span>Category: {selectedComplaint.category}</span>
+                </div>
+                <div className="flex items-center text-white/80">
+                  <span>Severity: {selectedComplaint.severity}</span>
+                </div>
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                <p className="text-white/80">{selectedComplaint.description}</p>
+              </div>
+              
+              {/* Progress Timeline */}
+              {selectedComplaint.updates && selectedComplaint.updates.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">Progress Timeline</h3>
+                  <div className="space-y-4">
+                    {selectedComplaint.updates.map((update, index) => (
+                      <div key={index} className="flex">
+                        <div className="flex flex-col items-center mr-4">
+                          <div className="w-3 h-3 bg-indigo-400 rounded-full"></div>
+                          {index < selectedComplaint.updates.length - 1 && (
+                            <div className="w-0.5 h-12 bg-indigo-400/30 mt-1"></div>
+                          )}
+                        </div>
+                        <div className="pb-4">
+                          <p className="text-white font-medium">{update.message}</p>
+                          <p className="text-white/60 text-sm">{formatDetailDate(update.date)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Stats Section */}
+              <div className="mt-6 pt-6 border-t border-white/20">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-white/60">Total Reports: </span>
+                    <span className="text-white">{selectedComplaint.reports}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/60">Upvotes: </span>
+                    <span className="text-white">{selectedComplaint.upvotes}</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <style jsx>{`
         select option {
