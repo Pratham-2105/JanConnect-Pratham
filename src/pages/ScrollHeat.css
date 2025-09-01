@@ -1,0 +1,161 @@
+/* ScrollHeatmap.css - minimal but polished */
+.scrollheat-container {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 1rem;
+  align-items: start;
+  height: 100vh;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Left column: scroll content */
+.scroll-col {
+  height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding-right: 8px;
+  position: relative;
+}
+.scrollpoint {
+  height: 90vh;
+  margin: 0 0 1.2rem 0;
+  padding: 2rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  color: #e6eef8;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.scrollpoint h2 { margin: 0 0 0.6rem 0; font-size: 1.4rem; }
+.scrollpoint p { margin: 0; opacity: 0.8; }
+
+/* Right column: map container sticky */
+.map-col {
+  position: relative;
+  height: calc(100vh - 2rem);
+  border-radius: 10px;
+  overflow: hidden;
+}
+#map {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;  /* ✅ Must give height */
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+/* legend */
+.legend {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 999;
+  background: rgba(17,24,39,0.75);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  backdrop-filter: blur(6px);
+}
+.legend .bar {
+  width: 160px;
+  height: 10px;
+  background: linear-gradient(90deg, rgba(0,0,255,0.35), rgba(0,255,0,0.5), rgba(255,0,0,0.8));
+  margin: 6px 0;
+  border-radius: 6px;
+}
+
+/* tooltip */
+.map-tooltip {
+  position: absolute;
+  pointer-events: none;
+  padding: 6px 8px;
+  background: rgba(2,6,23,0.9);
+  color: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  transform: translate(-50%, -120%);
+  z-index: 10000;
+}
+
+/* timeline indicator */
+.timeline {
+  position: absolute;
+  left: 6px;
+  top: 10%;
+  z-index: 998;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.timeline .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transition: all .25s ease;
+}
+.timeline .dot.active {
+  transform: scale(1.6);
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0,127,255,0.35);
+}
+
+/* pulse marker (uses leaflet marker container) */
+.pulse {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255,64,64,0.95);
+  position: relative;
+  box-shadow: 0 0 8px rgba(255,64,64,0.6);
+}
+.pulse::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  animation: pulse 1.6s infinite ease-out;
+  background: rgba(255,64,64,0.35);
+}
+@keyframes pulse {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.9 }
+  70% { transform: translate(-50%, -50%) scale(2.4); opacity: 0.05; }
+  100% { opacity: 0 }
+}
+
+/* mobile: stack map above */
+@media (max-width: 900px) {
+  .scrollheat-container { grid-template-columns: 1fr; grid-auto-rows: auto; }
+  .scroll-col { order: 2; height: auto; max-height: 60vh; }
+  .map-col { order: 1; height: 60vh; margin-bottom: 0.8rem; }
+}
+
+/* Thin transparent scrollbar for the scroll container */
+.scroll-col::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-col::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-col::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.scroll-col::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Firefox support */
+.scroll-col {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}

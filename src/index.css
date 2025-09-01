@@ -1,3 +1,4 @@
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 @import "tailwindcss";
 @tailwind base;
 @tailwind components;
@@ -11,7 +12,6 @@
 
   /* Active bullet */
   .swiper-pagination-bullet-active {
-  @apply bg-white/30 w-4 h-4 border border-white shadow-[0_0_12px_rgba(255,255,255,0.5)];
-}
-
+    @apply bg-white/30 w-4 h-4 border border-white shadow-[0_0_12px_rgba(255,255,255,0.5)];
+  }
 }
