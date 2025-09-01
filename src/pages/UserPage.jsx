@@ -993,8 +993,8 @@ export default function UserPage() {
           </div>
         </div>
 <div className="w-full flex justify-center items-center text-center mt-6">
-  <h1 className="text-[5vw] md:text-[4vw] font-bold text-white">
-    Live Complaint Heatmap
+  <h1 className="text-[5vw] md:text-[3vw] font-bold text-white">
+    Live Complaints Heatmap
   </h1>
 </div>
         </div>
