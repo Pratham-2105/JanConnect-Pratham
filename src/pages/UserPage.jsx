@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import {LogOut,Menu,X,AlertCircle,Search,CheckCircle,ChevronDown,ChevronUp,MapPin,Users,Clock,ArrowRight,BarChart3,TrendingUp,ThumbsUp,Calendar,Building,User,Star,} from "lucide-react";
+import {LogOut,Menu,X,AlertCircle,Search,CheckCircle,ChevronDown,ChevronUp,MapPin,Users,Clock,ArrowRight,BarChart3,TrendingUp,ArrowBigUp,Calendar,Building,User,Star,} from "lucide-react";
 import { Globe3D } from "../components/Globe3D";
 import LionComponent from "../pages/LionComponent";
 import {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,LineChart,Line,Legend,} from "recharts";
@@ -780,7 +780,7 @@ export default function UserPage() {
                         whileTap={{ scale: 0.9 }}
                         title="Upvote this complaint"
                       >
-                        <ThumbsUp className="h-4 w-4" />
+                        <ArrowBigUp className="h-4 w-4" />
                       </motion.button>
                       <span className="text-xs text-white/80 mt-1">
                         {complaint.upvotes}
