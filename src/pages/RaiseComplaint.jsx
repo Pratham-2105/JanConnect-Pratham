@@ -312,7 +312,7 @@ export default function RaiseComplaint() {
 
       {/* Header */}
       <motion.header 
-        className="fixed top-0 left-0 w-full z-50 bg-white/10 backdrop-blur-md"
+        className="fixed top-0 left-0 w-full z-50 backdrop-blur-md"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
@@ -320,7 +320,7 @@ export default function RaiseComplaint() {
         <div className="container mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
           <motion.button 
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-800 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/20"
+            className="flex items-center text-white p-2 rounded-xl hover:bg-white/20 transition-all duration-200 backdrop-blur-sm "
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -329,7 +329,7 @@ export default function RaiseComplaint() {
           </motion.button>
           
           <motion.div 
-            className="text-xl md:text-2xl font-bold text-gray-800"
+            className="text-xl md:text-2xl font-bold text-white"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
