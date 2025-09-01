@@ -5,6 +5,7 @@ import {LogOut,Menu,X,AlertCircle,Search,CheckCircle,ChevronDown,ChevronUp,MapPi
 import { Globe3D } from "../components/Globe3D";
 import LionComponent from "../pages/LionComponent";
 import {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,LineChart,Line,Legend,} from "recharts";
+import ScrollHeatmap from "../pages/ScrollHeatmap";
 
 export default function UserPage() {
   const navigate = useNavigate();
@@ -914,7 +915,22 @@ const departmentPerformanceData = [
             )}
           </div>
         </div>
+<div className="w-full flex justify-center items-center text-center mt-6">
+  <h1 className="text-[5vw] md:text-[4vw] font-bold text-white">
+    Live Complaint Heatmap
+  </h1>
+</div>
+        </div>
+      <div style={{ background: "#081025", minHeight: "100vh", color: "#e6eef8", padding: 0 }}>
+      <header style={{ padding: "1rem 1.25rem", fontSize: "1.05rem", fontWeight: 600 }}>
+        JanConnect — Scroll Heatmap demo
+      </header>
+      <main>
+        <ScrollHeatmap />
+      </main>
       </div>
+
+      
 
       <style jsx>{`
         select option {
