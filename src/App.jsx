@@ -9,6 +9,9 @@ import UserPage from "./pages/UserPage";
 import RaiseComplaint from "./pages/RaiseComplaint";
 import TrackComplaint from "./pages/TrackComplaint";
 import ResolvedComplaints from "./pages/ResolvedComplaints";
+import AdminDashboard from './pages/AdminDashboard';
+// import ComplaintDetail from "./pages/ComplaintDetail";
+
 
 function LayoutWrapper({ children }) {
   const location = useLocation();
@@ -19,7 +22,8 @@ function LayoutWrapper({ children }) {
   // Hide layout if pathname matches any hidden route
   // or starts with /user/
   const hideLayout =
-    hiddenRoutes.includes(location.pathname) || location.pathname.startsWith("/user/");
+    hiddenRoutes.includes(location.pathname) || location.pathname.startsWith("/user/") ||
+  location.pathname.startsWith("/admin/");
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -43,6 +47,8 @@ function App() {
           <Route path="/user/:userId/raise" element={<RaiseComplaint />} />
           <Route path="/user/:userId/track" element={<TrackComplaint />} />
           <Route path="/user/:userId/resolved" element={<ResolvedComplaints />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          {/* <Route path="/complaint/:complaintId" element={<ComplaintDetail />} /> */}
         </Routes>
       </LayoutWrapper>
     </Router>
