@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, MapPin, AlertCircle, Upload, X, Navigation, CheckCircle } from "lucide-react";
-import Autocomplete from "react-google-autocomplete";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { createReport } from '../api/report';
 
@@ -12,12 +11,10 @@ const CustomModal = ({ isOpen, onClose, children }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
         onClick={onClose}
       />
-      {/* Modal Content */}
       <div className="relative z-10">
         {children}
       </div>
@@ -27,9 +24,9 @@ const CustomModal = ({ isOpen, onClose, children }) => {
 
 const containerStyle = {
   width: '100%',
-  height: '300px',
-  marginTop: '1rem',
-  borderRadius: '1rem',
+  height: '250px',
+  marginTop: '0.5rem',
+  borderRadius: '0.75rem',
 };
 
 export default function RaiseComplaint() {
@@ -58,69 +55,112 @@ export default function RaiseComplaint() {
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
   const [markerPosition, setMarkerPosition] = useState(null);
-  const [mapCenter, setMapCenter] = useState(null); // null until current location obtained
+  const [mapCenter, setMapCenter] = useState(null);
 
   const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
+  // Load Maps JS API with Places library
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ['places'],
+    id: 'maps-script-places'
   });
+
+  // Ref for the Place Autocomplete web component
+  const acRef = useRef(null);
 
   // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "address") {
-      setFormData(prev => ({
-        ...prev,
-        location: { ...prev.location, address: value }
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  // Handle place selected from autocomplete
-  const handlePlaceSelected = (place) => {
-    if (place.geometry && place.geometry.location) {
-      const lat = place.geometry.location.lat();
-      const lng = place.geometry.location.lng();
-
-      let city = "", state = "", country = "";
-
-      if (place.address_components) {
-        place.address_components.forEach(component => {
-          const types = component.types;
-          if (types.includes('locality')) {
-            city = component.long_name;
-          } else if (types.includes('administrative_area_level_1')) {
-            state = component.long_name;
-          } else if (types.includes('country')) {
-            country = component.long_name;
-          }
-        });
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        location: {
-          address: place.formatted_address || place.name,
-          coordinates: [lng, lat],
-          placeId: place.place_id,
-          city,
-          state,
-          country
+  // Function to force update the autocomplete input value
+  const setAutocompleteValue = (value) => {
+    if (acRef.current) {
+      // Wait for the component to be fully rendered
+      setTimeout(() => {
+        const input = acRef.current.querySelector('input');
+        if (input) {
+          // Clear existing value
+          input.value = '';
+          // Set new value
+          input.value = value;
+          // Force the component to recognize the change
+          const event = new Event('input', { bubbles: true, cancelable: true });
+          input.dispatchEvent(event);
+          
+          // Also trigger change event
+          const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+          input.dispatchEvent(changeEvent);
         }
-      }));
-
-      setMarkerPosition({ lat, lng });
-      setMapCenter({ lat, lng });
-
-      setError("");
+      }, 100);
     }
   };
+
+  // Attach gmp-select listener when loaded
+  useEffect(() => {
+    if (!isLoaded || !acRef.current || !window.google?.maps?.places) return;
+
+    const el = acRef.current;
+
+    const onSelect = async (e) => {
+      try {
+        const place = e?.placePrediction?.toPlace?.();
+        if (!place) return;
+
+        // Fetch needed fields for details
+        await place.fetchFields({
+          fields: ['id', 'displayName', 'formattedAddress', 'location', 'addressComponents']
+        });
+
+        // Extract lat/lng
+        const loc = place.location;
+        const lat = typeof loc?.lat === 'function' ? loc.lat() : loc?.lat;
+        const lng = typeof loc?.lng === 'function' ? loc.lng() : loc?.lng;
+
+        let city = "", state = "", country = "";
+        const comps = place.addressComponents || [];
+        comps.forEach((c) => {
+          const types = c.types || [];
+          if (types.includes('locality')) city = c.longText || c.long_name || "";
+          else if (types.includes('administrative_area_level_1')) state = c.longText || c.long_name || "";
+          else if (types.includes('country')) country = c.longText || c.long_name || "";
+        });
+
+        const address = place.formattedAddress || place.displayName?.text || "";
+
+        setFormData(prev => ({
+          ...prev,
+          location: {
+            address: address,
+            coordinates: [lng ?? 0, lat ?? 0],
+            placeId: place.id ?? null,
+            city,
+            state,
+            country
+          }
+        }));
+
+        if (lat && lng) {
+          const pos = { lat, lng };
+          setMarkerPosition(pos);
+          setMapCenter(pos);
+        }
+
+        setError("");
+      } catch (err) {
+        setError("Failed to fetch place details");
+        console.error(err);
+      }
+    };
+
+    el.addEventListener('gmp-select', onSelect);
+    return () => el.removeEventListener('gmp-select', onSelect);
+  }, [isLoaded]);
 
   // Automatically get current location once on mount
   useEffect(() => {
@@ -147,10 +187,12 @@ export default function RaiseComplaint() {
               else if (types.includes('country')) country = component.long_name;
             });
 
+            const address = result.formatted_address;
+
             setFormData(prev => ({
               ...prev,
               location: {
-                address: result.formatted_address,
+                address: address,
                 coordinates: [longitude, latitude],
                 placeId: result.place_id,
                 city,
@@ -161,21 +203,28 @@ export default function RaiseComplaint() {
 
             setMarkerPosition({ lat: latitude, lng: longitude });
             setMapCenter({ lat: latitude, lng: longitude });
+            
+            // Update the autocomplete display
+            setAutocompleteValue(address);
           } else {
             throw new Error('No address found for current location');
           }
         } catch (error) {
+          const address = `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
           setFormData(prev => ({
             ...prev,
             location: {
               ...prev.location,
-              address: `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+              address: address,
               coordinates: [longitude, latitude]
             }
           }));
 
           setMarkerPosition({ lat: latitude, lng: longitude });
           setMapCenter({ lat: latitude, lng: longitude });
+          
+          // Update the autocomplete display
+          setAutocompleteValue(address);
         }
         setIsGettingLocation(false);
       },
@@ -213,14 +262,17 @@ export default function RaiseComplaint() {
           let city = "", state = "", country = "";
           result.address_components.forEach(component => {
             const types = component.types;
-            if (types.includes('locality')) city = component.long_name;
+            if (types.includes('locality') || types.includes('sublocality')) city = component.long_name;
             else if (types.includes('administrative_area_level_1')) state = component.long_name;
             else if (types.includes('country')) country = component.long_name;
           });
+
+          const address = result.formatted_address;
+          
           setFormData(prev => ({
             ...prev,
             location: {
-              address: result.formatted_address,
+              address: address,
               coordinates: [lng, lat],
               placeId: result.place_id,
               city,
@@ -228,6 +280,9 @@ export default function RaiseComplaint() {
               country
             }
           }));
+
+          // Update the autocomplete display with the new address
+          setAutocompleteValue(address);
         }
       } catch (e) {
         console.error("Reverse geocode error:", e);
@@ -255,6 +310,92 @@ export default function RaiseComplaint() {
     },
     [reverseGeocode]
   );
+
+  // Handle current location button click
+  const getCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported by this browser");
+      return;
+    }
+    
+    setIsGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}`
+          );
+          const data = await response.json();
+          if (data.results && data.results.length > 0) {
+            const result = data.results[0];
+            let city = "", state = "", country = "";
+            result.address_components.forEach(component => {
+              const types = component.types;
+              if (types.includes('locality')) city = component.long_name;
+              else if (types.includes('administrative_area_level_1')) state = component.long_name;
+              else if (types.includes('country')) country = component.long_name;
+            });
+
+            const address = result.formatted_address;
+
+            setFormData(prev => ({
+              ...prev,
+              location: {
+                address: address,
+                coordinates: [longitude, latitude],
+                placeId: result.place_id,
+                city,
+                state,
+                country
+              }
+            }));
+
+            setMarkerPosition({ lat: latitude, lng: longitude });
+            setMapCenter({ lat: latitude, lng: longitude });
+            
+            // Update the autocomplete display
+            setAutocompleteValue(address);
+          }
+        } catch (error) {
+          const address = `Location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+          setFormData(prev => ({
+            ...prev,
+            location: {
+              ...prev.location,
+              address: address,
+              coordinates: [longitude, latitude]
+            }
+          }));
+
+          setMarkerPosition({ lat: latitude, lng: longitude });
+          setMapCenter({ lat: latitude, lng: longitude });
+          
+          // Update the autocomplete display
+          setAutocompleteValue(address);
+        }
+        setIsGettingLocation(false);
+      },
+      (error) => {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setError("Location access denied by user");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setError("Location information is unavailable");
+            break;
+          case error.TIMEOUT:
+            setError("Location request timed out");
+            break;
+          default:
+            setError("Unknown error retrieving location");
+            break;
+        }
+        setIsGettingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -335,6 +476,14 @@ export default function RaiseComplaint() {
     navigate(`/user/${userId}`);
   };
 
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black/50">
+        <div className="text-white">Loading Google Maps...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -385,7 +534,15 @@ export default function RaiseComplaint() {
 
       <div className="flex-1 flex items-center justify-center p-4 relative z-10 mt-16">
         <motion.div className="w-full max-w-2xl bg-white/10 backdrop-blur-xl rounded-2xl shadow-lg p-6 md:p-8 border border-white/20" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Error Display */}
+            {error && (
+              <div className="p-3 bg-red-500/10 border border-red-400/30 rounded-xl text-red-200 text-sm flex items-center">
+                <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+
             {/* Title */}
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">Complaint Title *</label>
@@ -418,49 +575,80 @@ export default function RaiseComplaint() {
             {/* Description */}
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">Description *</label>
-              <textarea name="description" value={formData.description} onChange={handleInputChange} rows={4} placeholder="Please provide detailed information about the issue..." required className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60" />
+              <textarea name="description" value={formData.description} onChange={handleInputChange} rows={3} placeholder="Please provide detailed information about the issue..." required className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60" />
             </div>
 
-            {/* Location */}
+            {/* Location - Made smaller similar to title input */}
             <div>
-              <label className="block text-white/80 text-sm font-medium mb-2">
-                Location * <span className="text-white/60 text-xs ml-2">(Search or use your location)</span>
-              </label>
-              <div className="space-y-3">
-                <div className="relative">
-                  <Autocomplete apiKey={GOOGLE_MAPS_API_KEY} onPlaceSelected={handlePlaceSelected} value={formData.location.address} onChange={(e) => handleInputChange({ target: { name: 'address', value: e.target.value } })} options={{ types: [], componentRestrictions: { country: "in" }, fields: ["address_components", "geometry", "formatted_address", "place_id", "name"] }} className="w-full pl-10 pr-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 placeholder:text-white/60" placeholder="Type to search location (e.g., Park Street, Ranchi)" required />
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60" />
+              <label className="block text-white/80 text-sm font-medium mb-2">Location *</label>
+              <div className="flex gap-2">
+                {/* Autocomplete Input - Same size as title input */}
+                <div className="flex-1 relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/60 z-10 pointer-events-none" />
+                  <gmp-place-autocomplete
+                    ref={acRef}
+                    included-region-codes="IN"
+                    placeholder="Search location..."
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      paddingLeft: '2.5rem',
+                      paddingRight: '1rem',
+                      paddingTop: '0.75rem',
+                      paddingBottom: '0.75rem',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '0.75rem',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: 'white',
+                      fontSize: '1rem',
+                      outline: 'none'
+                    }}
+                  />
                 </div>
-
-                <motion.button type="button" onClick={() => {}} disabled={isGettingLocation} className="w-full py-2 text-sm bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-xl text-white/80 hover:bg-gradient-to-r hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  {isGettingLocation ? <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
-                    Getting location...
-                  </> : <>
-                    <Navigation className="mr-2 h-4 w-4" />
-                    📍 Use Current Location
-                  </>}
+                
+                {/* Current Location Button - Same height as title input */}
+                <motion.button 
+                  type="button" 
+                  onClick={getCurrentLocation} 
+                  disabled={isGettingLocation} 
+                  className="px-4 py-3 text-sm bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 rounded-xl text-white/80 hover:bg-gradient-to-r hover:from-green-500/30 hover:to-emerald-500/30 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center whitespace-nowrap"
+                  whileHover={{ scale: 1.02 }} 
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isGettingLocation ? (
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  ) : (
+                    <>
+                      <Navigation className="h-4 w-4 mr-2" />
+                      Current
+                    </>
+                  )}
                 </motion.button>
               </div>
             </div>
 
             {/* Google Map */}
             <div>
-              {isLoaded && mapCenter ? (
-                <GoogleMap mapContainerStyle={containerStyle} center={mapCenter} zoom={14} onClick={onMapClick} options={{ streetViewControl: false }}>
+              {mapCenter ? (
+                <GoogleMap mapContainerStyle={containerStyle} center={mapCenter} zoom={14} onClick={onMapClick} options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}>
                   {markerPosition && (<Marker position={markerPosition} draggable={true} onDragEnd={onMarkerDragEnd} />)}
                 </GoogleMap>
               ) : (
-                <div>Loading Map...</div>
+                <div className="w-full h-[250px] bg-white/5 rounded-xl border border-white/20 flex items-center justify-center text-white/60 text-sm">
+                  Select a location to view map
+                </div>
               )}
             </div>
 
             {/* Urgency */}
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">Urgency Level</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {['low', 'medium', 'high'].map(level => (
-                  <button key={level} type="button" className={`py-2 rounded-xl border transition-all duration-200 ${
+                  <button key={level} type="button" className={`py-2 text-sm rounded-xl border transition-all duration-200 ${
                       formData.urgency === level ? (level === 'high' ? 'bg-red-500/20 border-red-400 text-white' : level === 'medium' ? 'bg-yellow-500/20 border-yellow-400 text-white' : 'bg-green-500/20 border-green-400 text-white') : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
                     }`} onClick={() => setFormData(prev => ({ ...prev, urgency: level }))}>
                     {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -469,7 +657,7 @@ export default function RaiseComplaint() {
               </div>
             </div>
 
-            {/* File Upload */}
+            {/* File Upload - Keep original perfect size */}
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">Add Photo/Video (Optional)</label>
               {previewUrl && (
