@@ -6,9 +6,13 @@ import { Globe3D } from "../components/Globe3D";
 import LionComponent from "../pages/LionComponent";
 import {BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,LineChart,Line,Legend,} from "recharts";
 import ScrollHeatmap from "../pages/ScrollHeatmap";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchLocationDetails } from "../store/locationSlice";
+
 
 export default function UserPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [user, setUser] = useState(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [selectedState, setSelectedState] = useState("");
@@ -22,6 +26,30 @@ export default function UserPage() {
   // Sample data for dropdowns
   const states = ["California", "Texas", "New York", "Florida", "Illinois"];
 
+  const { latitude, longitude, district, state, loading, error } = useSelector(
+    (s) => s.location
+  );
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      // Optionally set error in Redux here if desired
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        dispatch(
+          fetchLocationDetails({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          })
+        );
+      },
+      (err) => {
+        dispatch(setLocationError(err.message))
+      }
+    );
+    // Only once on mount
+  }, [dispatch]);
   const authorities = {
     California: ["Los Angeles Police", "San Francisco PD", "San Diego Sheriff"],
     Texas: ["Houston Police", "Dallas PD", "Austin Sheriff"],
@@ -355,35 +383,24 @@ export default function UserPage() {
             JanConnect
           </motion.div>
 
+  
+
           {/* Desktop Navigation Items */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* State Dropdown */}
-            <div className="relative">
-              <select
-                value={selectedState}
-                onChange={(e) => {
-                  setSelectedState(e.target.value);
-                  setSelectedAuthority("");
-                }}
-                className="p-2 bg-white-900/70 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm"
-              >
-                <option value="" className="bg-white-800/90 text-white">
-                  Select Your State
-                </option>
-                {states.map((state) => (
-                  <option
-                    key={state}
-                    value={state}
-                    className="bg-white-800/90 text-white"
-                  >
-                    {state}
-                  </option>
-                ))}
-              </select>
-            </div>
+           {/* district name display */}
+          <div className="relative">
+            <input
+              type="text"
+              value={district || ""}
+              readOnly
+              placeholder="Detecting district..."
+              className="p-2 bg-white-900/70 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200 shadow-sm cursor-not-allowed"
+            />
+          </div>
+
 
             {/* Authority Dropdown */}
-            <div className="relative">
+            {/* <div className="relative">
               <select
                 value={selectedAuthority}
                 onChange={(e) => setSelectedAuthority(e.target.value)}
@@ -406,7 +423,7 @@ export default function UserPage() {
                     )
                   )}
               </select>
-            </div>
+            </div> */}
 
             {/* Profile Section */}
             <div className="relative">
