@@ -1009,11 +1009,9 @@ export default function UserPage() {
             )}
           </div>
         </div>
-<div className="w-full flex justify-center items-center text-center mt-6">
-  <h1 className="text-[5vw] md:text-[3vw] font-bold text-white">
-    Live Complaints Heatmap
-  </h1>
-</div>
+        <div className="w-full flex justify-center items-center text-center mt-6">
+          <h1 className="text-[5vw] md:text-[3vw] font-bold text-white">Live Complaints Heatmap</h1>
+        </div>
         </div>
       <div style={{ background: "#081025", minHeight: "100vh", color: "#e6eef8", padding: 0 }}>
       <header style={{ padding: "1rem 1.25rem", fontSize: "1.05rem", fontWeight: 600 }}>
