@@ -843,25 +843,27 @@ const AdminDashboard = () => {
                   <div>
                     <label className="block text-sm font-medium text-white/70 mb-2">Status</label>
                     <select
+                        style={{backgroundColor:"transparent"}}
                       className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                       value={selectedComplaint.status}
                     >
-                      <option value="pending">Pending</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="resolved">Resolved</option>
-                      <option value="rejected">Rejected</option>
+                      <option style={{backgroundColor:"gray"}} value="pending">Pending</option>
+                      <option style={{backgroundColor:"gray"}} value="in_progress">In Progress</option>
+                      <option style={{backgroundColor:"gray"}} value="resolved">Resolved</option>
+                      <option style={{backgroundColor:"gray"}} value="rejected">Rejected</option>
                     </select>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-white/70 mb-2">Priority</label>
                     <select
+                        style={{backgroundColor:"transparent"}}
                       className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                       value={selectedComplaint.urgency}
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
+                      <option style={{backgroundColor:"gray"}} value="low">Low</option>
+                      <option style={{backgroundColor:"gray"}} value="medium">Medium</option>
+                      <option style={{backgroundColor:"gray"}} value="high">High</option>
                     </select>
                   </div>
                   

@@ -560,15 +560,15 @@ export default function RaiseComplaint() {
             {/* Category */}
             <div>
               <label className="block text-white/80 text-sm font-medium mb-2">Category *</label>
-              <select name="category" value={formData.category} onChange={handleInputChange} required className="w-full px-4 py-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200">
-                <option value="">Select a category</option>
-                <option value="Infrastructure">Infrastructure</option>
-                <option value="Sanitation">Sanitation</option>
-                <option value="Street Lighting">Street Lighting</option>
-                <option value="Water Supply">Water Supply</option>
-                <option value="Traffic">Traffic</option>
-                <option value="Parks">Parks</option>
-                <option value="Other">Other</option>
+              <select style={{backgroundColor:"transparent"}} name="category" value={formData.category} onChange={handleInputChange} required className="w-full px-4 py-3 bg-black backdrop-blur-sm rounded-xl border border-white/20 text-white focus:border-indigo-400/70 focus:ring-2 focus:ring-indigo-400/30 focus:outline-none transition-all duration-200">
+                <option style={{backgroundColor:"gray"}} value="">Select a category</option>
+                <option style={{backgroundColor:"gray"}} value="Infrastructure">Infrastructure</option>
+                <option style={{backgroundColor:"gray"}} value="Sanitation">Sanitation</option>
+                <option style={{backgroundColor:"gray"}} value="Street Lighting">Street Lighting</option>
+                <option style={{backgroundColor:"gray"}} value="Water Supply">Water Supply</option>
+                <option style={{backgroundColor:"gray"}} value="Traffic">Traffic</option>
+                <option style={{backgroundColor:"gray"}} value="Parks">Parks</option>
+                <option style={{backgroundColor:"gray"}} value="Other">Other</option>
               </select>
             </div>
 
